@@ -1,182 +1,182 @@
 # Team Assignment
 
-Tai lieu nay la bang phan cong va cach lam viec song song tren baseline hien tai.
+Tài liệu này là bảng phân công và cách làm việc song song trên baseline hiện tại.
 
-## 1. Nguyen tac chung truoc khi chia viec
+## 1. Nguyên tắc chung trước khi chia việc
 
-Repo da co baseline chay duoc. Nhom nen cai tien tren baseline nay, khong lam lai ha tang tu dau.
+Repo đã có baseline chạy được. Nhóm nên cải tiến trên baseline này, không làm lại hạ tầng từ đầu.
 
-Nhung file dung chung chi nen do chu sua truc tiep, tru khi co phe duyet:
+Những file dùng chung chỉ nên do chủ sửa trực tiếp, trừ khi có phê duyệt:
 
 - `docker-compose.yml`
 - `.env.example`
 - `README.md`
 - `docs/interfaces.md`
 
-Moi thanh vien nen sua chu yeu trong module minh phu trach.
+Mỗi thành viên nên sửa chủ yếu trong module mình phụ trách.
 
-## 2. Kien truc dang co san trong repo
+## 2. Kiến trúc đang có sẵn trong repo
 
-| Tang | Trang thai hien tai | File chinh |
+| Tầng | Trạng thái hiện tại | File chính |
 | --- | --- | --- |
-| Ingestion fallback | producer mau gui du lieu vao Kafka | `data/sample_comments.jsonl`, `producer/producer.py` |
-| Bronze | Kafka sang HDFS raw da noi san | `spark/jobs/bronze_stream.py` |
-| Silver | cleaning va sentiment baseline da co | `spark/jobs/silver_stream.py` |
-| Gold | metric tong hop da co | `spark/jobs/gold_stream.py` |
-| Metadata | Hive Metastore da co va dung SQL Server local | `hive/`, `spark/sql/register_tables.sql` |
-| SQL consumption | Spark Thrift Server da co | `docker-compose.yml`, `scripts/download_hive_jdbc.ps1` |
+| Ingestion fallback | producer mẫu gửi dữ liệu vào Kafka | `data/sample_comments.jsonl`, `producer/producer.py` |
+| Bronze | Kafka sang HDFS raw đã nối sẵn | `spark/jobs/bronze_stream.py` |
+| Silver | cleaning và sentiment baseline đã có | `spark/jobs/silver_stream.py` |
+| Gold | metric tổng hợp đã có | `spark/jobs/gold_stream.py` |
+| Metadata | Hive Metastore đã có và dùng SQL Server local | `hive/`, `spark/sql/register_tables.sql` |
+| SQL consumption | Spark Thrift Server đã có | `docker-compose.yml`, `scripts/download_hive_jdbc.ps1` |
 
-Y nghia:
+Ý nghĩa:
 
-- moi nguoi deu co the bat dau tu mot bo khung cu the
-- khong ai phai ngoi cho nguoi khac lam xong moi toi luot
+- mỗi người đều có thể bắt đầu từ một bộ khung cụ thể
+- không ai phải ngồi chờ người khác làm xong mới tới lượt
 
-## 3. Nguoi A: Ingestion, API, Kafka
+## 3. Người A: Ingestion, API, Kafka
 
-### Muc tieu chinh
+### Mục tiêu chính
 
-Bien producer hien tai thanh collector dung YouTube Data API cho 1 `videoId`, nhung van giu sample mode de test.
+Biến producer hiện tại thành collector dùng YouTube Data API cho 1 `videoId`, nhưng vẫn giữ sample mode để test.
 
-### File A nen lam truoc
+### File A nên làm trước
 
 - `producer/producer.py`
 - `producer/requirements.txt`
-- `data/sample_comments.jsonl` neu can cap nhat bo du lieu mau
-- `.env` o may cua A de test
+- `data/sample_comments.jsonl` nếu cần cập nhật bộ dữ liệu mẫu
+- `.env` ở máy của A để test
 
-### File A nen doc nhung khong so huu
+### File A nên đọc nhưng không sở hữu
 
 - `docs/interfaces.md`
 - `docker-compose.yml`
 - `spark/jobs/bronze_stream.py`
 
-### Dau ra A can ban giao
+### Đầu ra A cần bàn giao
 
-- cach truyen vao 1 `videoId`
-- luong goi YouTube API that
-- ban ghi Kafka dung schema da khoa trong `docs/interfaces.md`
-- sample mode van chay de fallback
+- cách truyền vào 1 `videoId`
+- luồng gọi YouTube API thật
+- bản ghi Kafka đúng schema đã khóa trong `docs/interfaces.md`
+- sample mode vẫn chạy để fallback
 
-### Ke hoach lam viec cho A
+### Kế hoạch làm việc cho A
 
-Giai doan 1:
+Giai đoạn 1:
 
-- chay producer mau hien tai
-- hieu dang message dang day vao Kafka
+- chạy producer mẫu hiện tại
+- hiểu dạng message đang đẩy vào Kafka
 
-Giai doan 2:
+Giai đoạn 2:
 
-- them dependency YouTube API va env can thiet
-- viet logic lay comment tu 1 `videoId`
-- map du lieu ve schema chung
+- thêm dependency YouTube API và env cần thiết
+- viết logic lấy comment từ 1 `videoId`
+- map dữ liệu về schema chung
 
-Giai doan 3:
+Giai đoạn 3:
 
-- ho tro ca `sample` va `youtube_api`
-- dam bao Bronze van doc duoc binh thuong
+- hỗ trợ cả `sample` và `youtube_api`
+- đảm bảo Bronze vẫn đọc được bình thường
 
-Giai doan 4:
+Giai đoạn 4:
 
-- dua cho B va C 5 den 10 ban ghi mau tu API that
-- ghi ro cot nao co the null, cot nao luon co
+- đưa cho B và C 5 đến 10 bản ghi mẫu từ API thật
+- ghi rõ cột nào có thể null, cột nào luôn có
 
-### Vi sao A co the lam doc lap
+### Vì sao A có thể làm độc lập
 
-- sample producer da co san
-- Kafka topic da co dinh
-- B khong can cho A hoan thien API that moi bat dau duoc
+- sample producer đã có sẵn
+- Kafka topic đã cố định
+- B không cần chờ A hoàn thiện API thật mới bắt đầu được
 
-### Lenh A tu kiem tra
+### Lệnh A tự kiểm tra
 
 ```powershell
 docker compose up -d producer
 docker compose logs --tail 100 producer
 ```
 
-Kiem tra topic bang Kafka UI:
+Kiểm tra topic bằng Kafka UI:
 
 - `http://localhost:8080`
 
-### Dieu kien de A xem nhu xong
+### Điều kiện để A xem như xong
 
-- nhap duoc 1 `videoId`
-- Kafka nhan ban ghi tu YouTube API that
-- sample mode van chay
-- schema Kafka dung hop dong chung
+- nhập được 1 `videoId`
+- Kafka nhận bản ghi từ YouTube API thật
+- sample mode vẫn chạy
+- schema Kafka đúng hợp đồng chung
 
-## 4. Nguoi B: Bronze, Silver, Gold va model
+## 4. Người B: Bronze, Silver, Gold và model
 
-### Muc tieu chinh
+### Mục tiêu chính
 
-Cai tien pipeline xu ly du lieu va thay baseline sentiment hien tai bang workflow model tot hon.
+Cải tiến pipeline xử lý dữ liệu và thay baseline sentiment hiện tại bằng workflow model tốt hơn.
 
-### Dieu B can nam ro
+### Điều B cần nắm rõ
 
-B khong can cho A xong API.
+B không cần chờ A xong API.
 
-B bat dau tu:
+B bắt đầu từ:
 
 - `data/sample_comments.jsonl`
-- hop dong message trong `docs/interfaces.md`
-- cac Spark job baseline da co
+- hợp đồng message trong `docs/interfaces.md`
+- các Spark job baseline đã có
 
-### File B nen lam truoc
+### File B nên làm trước
 
 - `spark/jobs/bronze_stream.py`
 - `spark/jobs/silver_stream.py`
 - `spark/jobs/gold_stream.py`
-- co the tao them script train/inference trong `spark/jobs/` sau khi thong nhat voi chu
+- có thể tạo thêm script train/inference trong `spark/jobs/` sau khi thống nhất với chủ
 
-### File B nen doc nhung khong so huu
+### File B nên đọc nhưng không sở hữu
 
 - `docs/interfaces.md`
 - `spark/sql/register_tables.sql`
 - `data/sample_comments.jsonl`
 
-### Dau ra B can ban giao
+### Đầu ra B cần bàn giao
 
-- Bronze on dinh va khong pha hop dong schema
-- Silver tot hon o lam sach, dac trung, sentiment
-- co duong train model ro rang
-- Gold co metric phu hop cho dashboard
+- Bronze ổn định và không phá hợp đồng schema
+- Silver tốt hơn ở làm sạch, đặc trưng, sentiment
+- có đường train model rõ ràng
+- Gold có metric phù hợp cho dashboard
 
-### Ke hoach lam viec cho B
+### Kế hoạch làm việc cho B
 
-Giai doan 1:
+Giai đoạn 1:
 
-- chay baseline Bronze, Silver, Gold bang du lieu mau
-- xac nhan schema va output hien tai
+- chạy baseline Bronze, Silver, Gold bằng dữ liệu mẫu
+- xác nhận schema và output hiện tại
 
-Giai doan 2:
+Giai đoạn 2:
 
-- cai tien Bronze neu can bo sung metadata hoac xu ly schema
-- khong bien Bronze thanh tang cleaning nang
+- cải tiến Bronze nếu cần bổ sung metadata hoặc xử lý schema
+- không biến Bronze thành tầng cleaning nặng
 
-Giai doan 3:
+Giai đoạn 3:
 
-- cai tien Silver preprocessing
-- xu ly null, text ban, ngon ngu khong dong deu
-- xac dinh feature sentiment
-- giu co che dedup theo `comment_id`
+- cải tiến Silver preprocessing
+- xử lý null, text bẩn, ngôn ngữ không đồng đều
+- xác định feature sentiment
+- giữ cơ chế dedup theo `comment_id`
 
-Giai doan 4:
+Giai đoạn 4:
 
-- chuan bi format du lieu train
-- chon huong model
-- train hoac tich hop model tot hon
-- dua ket qua model quay lai Silver
+- chuẩn bị format dữ liệu train
+- chọn hướng model
+- train hoặc tích hợp model tốt hơn
+- đưa kết quả model quay lại Silver
 
-Giai doan 5:
+Giai đoạn 5:
 
-- cai tien Gold de C co nhieu metric hon
-- nhung van giu bo cot baseline de C khong bi vo dashboard
+- cải tiến Gold để C có nhiều metric hơn
+- nhưng vẫn giữ bộ cột baseline để C không bị vỡ dashboard
 
-### Huong lam viec toi uu cho B
+### Hướng làm việc tối ưu cho B
 
-- giu baseline keyword hien tai song song voi huong model moi
-- thu nghiem dan dan, khong sua mot lan gay vo toan stream
+- giữ baseline keyword hiện tại song song với hướng model mới
+- thử nghiệm dần dần, không sửa một lần gây vỡ toàn stream
 
-### Lenh B tu kiem tra
+### Lệnh B tự kiểm tra
 
 ```powershell
 docker compose up -d spark-bronze spark-silver spark-gold
@@ -185,7 +185,7 @@ docker compose logs --tail 100 spark-silver
 docker compose logs --tail 100 spark-gold
 ```
 
-Kiem tra 3 bang sau khi dang ky:
+Kiểm tra 3 bảng sau khi đăng ký:
 
 ```powershell
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT * FROM lakehouse.bronze_youtube_comments LIMIT 5'"
@@ -193,70 +193,70 @@ docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SEL
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT * FROM lakehouse.gold_youtube_comment_metrics LIMIT 10'"
 ```
 
-### Dieu kien de B xem nhu xong
+### Điều kiện để B xem như xong
 
-- Bronze van ingest dung
-- Silver sach hon va sentiment tot hon
-- co duong model test duoc
-- Gold mo ra metric huu ich cho C
+- Bronze vẫn ingest đúng
+- Silver sạch hơn và sentiment tốt hơn
+- có đường model test được
+- Gold mở ra metric hữu ích cho C
 
-## 5. Nguoi C: Metastore, SQL, JDBC va Power BI
+## 5. Người C: Metastore, SQL, JDBC và Power BI
 
-### Muc tieu chinh
+### Mục tiêu chính
 
-So huu lop truy cap du lieu va trinh bay de du lieu xu ly co the query duoc va len dashboard.
+Sở hữu lớp truy cập dữ liệu và trình bày để dữ liệu xử lý có thể query được và lên dashboard.
 
-### File C nen lam truoc
+### File C nên làm trước
 
 - `hive/conf/hive-site.xml.template`
 - `hive/scripts/start-metastore.sh`
 - `spark/sql/register_tables.sql`
 - `scripts/download_hive_jdbc.ps1`
 
-### File C nen doc nhung khong so huu
+### File C nên đọc nhưng không sở hữu
 
 - `docs/interfaces.md`
 - `docker-compose.yml`
 - `spark/jobs/gold_stream.py`
 
-### Dau ra C can ban giao
+### Đầu ra C cần bàn giao
 
-- Hive Metastore on dinh tren SQL Server local
-- dang ky bang external cho Bronze, Silver, Gold
-- Spark Thrift Server truy cap duoc
+- Hive Metastore ổn định trên SQL Server local
+- đăng ký bảng external cho Bronze, Silver, Gold
+- Spark Thrift Server truy cập được
 - JDBC test qua
-- Power BI doc duoc Gold va co dashboard dau tien
+- Power BI đọc được Gold và có dashboard đầu tiên
 
-### Ke hoach lam viec cho C
+### Kế hoạch làm việc cho C
 
-Giai doan 1:
+Giai đoạn 1:
 
-- chay baseline Metastore
-- xac nhan ket noi toi SQL Server local
-- xac nhan dang ky bang `lakehouse` thanh cong
+- chạy baseline Metastore
+- xác nhận kết nối tới SQL Server local
+- xác nhận đăng ký bảng `lakehouse` thành công
 
-Giai doan 2:
+Giai đoạn 2:
 
-- query thu Bronze, Silver, Gold trong Spark SQL
-- xac nhan Thrift Server nghe cong `10000`
+- query thử Bronze, Silver, Gold trong Spark SQL
+- xác nhận Thrift Server nghe cổng `10000`
 
-Giai doan 3:
+Giai đoạn 3:
 
-- test JDBC bang DBeaver hoac cong cu tuong tu
-- chuan bi thong tin ket noi cho Power BI
+- test JDBC bằng DBeaver hoặc công cụ tương tự
+- chuẩn bị thông tin kết nối cho Power BI
 
-Giai doan 4:
+Giai đoạn 4:
 
-- dung dashboard Power BI dau tien tren Gold
-- uu tien don gian, on dinh
-- khi B them metric thi cap nhat dashboard sau
+- dựng dashboard Power BI đầu tiên trên Gold
+- ưu tiên đơn giản, ổn định
+- khi B thêm metric thì cập nhật dashboard sau
 
-### Vi sao C co the lam doc lap
+### Vì sao C có thể làm độc lập
 
-- Metastore, dang ky bang va Thrift Server da co san
-- C co the test tren bang baseline truoc khi B nang cap model
+- Metastore, đăng ký bảng và Thrift Server đã có sẵn
+- C có thể test trên bảng baseline trước khi B nâng cấp model
 
-### Lenh C tu kiem tra
+### Lệnh C tự kiểm tra
 
 ```powershell
 docker compose up -d hive-metastore spark-thriftserver
@@ -264,7 +264,7 @@ docker compose logs --tail 100 hive-metastore
 docker compose logs --tail 100 spark-thriftserver
 ```
 
-Dang ky va query bang:
+Đăng ký và query bảng:
 
 ```powershell
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt/sql/register_tables.sql"
@@ -272,31 +272,31 @@ docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SHO
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT * FROM lakehouse.gold_youtube_comment_metrics LIMIT 10'"
 ```
 
-### Dieu kien de C xem nhu xong
+### Điều kiện để C xem như xong
 
-- Metastore on dinh voi SQL Server local
-- bang dang ky va query duoc
-- JDBC truy cap duoc qua Spark Thrift Server
-- Power BI doc duoc Gold
+- Metastore ổn định với SQL Server local
+- bảng đăng ký và query được
+- JDBC truy cập được qua Spark Thrift Server
+- Power BI đọc được Gold
 
-## 6. Vai tro cua chu
+## 6. Vai trò của chủ
 
-Chu nen tap trung vao tich hop va giu pham vi:
+Chủ nên tập trung vào tích hợp và giữ phạm vi:
 
-- giu on dinh ten dung chung
-- phe duyet thay doi schema
-- phe duyet thay doi `docker-compose.yml` va file dung chung
-- chay full integration sau moi phase cua A, B, C
-- quyet dinh khi nao baseline du on de merge chung
+- giữ ổn định tên dùng chung
+- phê duyệt thay đổi schema
+- phê duyệt thay đổi `docker-compose.yml` và file dùng chung
+- chạy full integration sau mỗi phase của A, B, C
+- quyết định khi nào baseline đủ ổn để merge chung
 
-## 7. Thu tu tich hop de tranh vo he thong
+## 7. Thứ tự tích hợp để tránh vỡ hệ thống
 
-Khong nen merge tat ca cung luc.
+Không nên merge tất cả cùng lúc.
 
-Thu tu goi y:
+Thứ tự gợi ý:
 
-1. A chung minh collector API that map dung schema chung
-2. B xac nhan Bronze va Silver van an schema do
-3. B xac nhan Gold van giu bo cot toi thieu C can
-4. C dang ky lai va test lop SQL
-5. Chu chay full stack end-to-end
+1. A chứng minh collector API thật map đúng schema chung
+2. B xác nhận Bronze và Silver vẫn ăn schema đó
+3. B xác nhận Gold vẫn giữ bộ cột tối thiểu C cần
+4. C đăng ký lại và test lớp SQL
+5. Chủ chạy full stack end-to-end

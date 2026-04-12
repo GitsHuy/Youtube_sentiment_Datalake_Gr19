@@ -1,146 +1,146 @@
 # Interfaces
 
-Tai lieu nay khoa cac diem giao tiep dung chung de A, B, C co the lam song song ma khong va nhau.
+Tài liệu này khóa các điểm giao tiếp dùng chung để A, B, C có thể làm song song mà không va nhau.
 
-## 1. Muc tieu chung
+## 1. Mục tiêu chung
 
-Luong nghiep vu nhom dang nham toi:
+Luồng nghiệp vụ nhóm đang nhắm tới:
 
-- lay binh luan tu dung 1 video YouTube thong qua `videoId`
-- day binh luan vao Kafka
-- luu qua Bronze, Silver, Gold
-- dang ky metadata qua Hive Metastore
-- mo du lieu Gold cho SQL va Power BI
+- lấy bình luận từ đúng 1 video YouTube thông qua `videoId`
+- đẩy bình luận vào Kafka
+- lưu qua Bronze, Silver, Gold
+- đăng ký metadata qua Hive Metastore
+- mở dữ liệu Gold cho SQL và Power BI
 
-Baseline hien tai van giu `data/sample_comments.jsonl` lam nguon fallback de moi thanh vien test doc lap.
+Baseline hiện tại vẫn giữ `data/sample_comments.jsonl` làm nguồn fallback để mỗi thành viên test độc lập.
 
-## 2. Hang so dung chung
+## 2. Hằng số dùng chung
 
 Kafka topic:
 
 - `youtube-comments`
 
-Duong dan HDFS:
+Đường dẫn HDFS:
 
 - Bronze: `hdfs://namenode:8020/lake/bronze/youtube_comments`
 - Silver: `hdfs://namenode:8020/lake/silver/youtube_comments`
 - Gold: `hdfs://namenode:8020/lake/gold/youtube_comment_metrics`
 
-Database va bang Hive:
+Database và bảng Hive:
 
 - database: `lakehouse`
-- bang Bronze: `lakehouse.bronze_youtube_comments`
-- bang Silver: `lakehouse.silver_youtube_comments`
-- bang Gold: `lakehouse.gold_youtube_comment_metrics`
+- bảng Bronze: `lakehouse.bronze_youtube_comments`
+- bảng Silver: `lakehouse.silver_youtube_comments`
+- bảng Gold: `lakehouse.gold_youtube_comment_metrics`
 
-Nhung ten nay phai giu on dinh neu chu chua cho phep doi.
+Những tên này phải giữ ổn định nếu chủ chưa cho phép đổi.
 
-## 3. Schema Kafka hien tai
+## 3. Schema Kafka hiện tại
 
-Day la schema ma job Bronze hien tai da ho tro.
+Đây là schema mà job Bronze hiện tại đã hỗ trợ.
 
-| Field | Type | Bat buoc | Ghi chu |
+| Field | Type | Bắt buộc | Ghi chú |
 | --- | --- | --- | --- |
-| `event_time` | timestamp string | co | Spark dang parse ve timestamp |
-| `comment_id` | string | co | id duy nhat cua binh luan |
-| `video_id` | string | co | id video dang theo doi |
-| `author` | string | co | ten tac gia binh luan |
-| `text` | string | co | noi dung goc |
-| `like_count` | integer | co | so luot like |
-| `reply_count` | integer | co | co the bang `0` neu la reply |
-| `is_reply` | boolean | co | `false` neu la top-level, `true` neu la reply |
-| `lang` | string | khong | neu thieu thi dua ve `unknown` |
+| `event_time` | timestamp string | có | Spark đang parse về timestamp |
+| `comment_id` | string | có | id duy nhất của bình luận |
+| `video_id` | string | có | id video đang theo dõi |
+| `author` | string | có | tên tác giả bình luận |
+| `text` | string | có | nội dung gốc |
+| `like_count` | integer | có | số lượt like |
+| `reply_count` | integer | có | có thể bằng `0` nếu là reply |
+| `is_reply` | boolean | có | `false` nếu là top-level, `true` nếu là reply |
+| `lang` | string | không | nếu thiếu thì đưa về `unknown` |
 
-Nguoi A phai giu toi thieu schema nay de Bronze khong vo.
+Người A phải giữ tối thiểu schema này để Bronze không vỡ.
 
-## 4. Schema ingestion mo rong de xet o buoc sau
+## 4. Schema ingestion mở rộng để xét ở bước sau
 
-Nhung field duoi day nen them o vong sau khi A va B thong nhat:
+Những field dưới đây nên thêm ở vòng sau khi A và B thống nhất:
 
-| Field | Type | Bat buoc | Nguoi lien quan | Ghi chu |
+| Field | Type | Bắt buộc | Người liên quan | Ghi chú |
 | --- | --- | --- | --- | --- |
-| `parent_comment_id` | string | khong | A + B | de truy vet reply |
-| `source` | string | co | A | goi y `youtube_api` hoac `sample_file` |
-| `collected_at` | timestamp string | co | A | thoi diem collector lay du lieu |
+| `parent_comment_id` | string | không | A + B | để truy vết reply |
+| `source` | string | có | A | gợi ý `youtube_api` hoặc `sample_file` |
+| `collected_at` | timestamp string | có | A | thời điểm collector lấy dữ liệu |
 
-Quy tac:
+Quy tắc:
 
-- A khong tu y them field vao luong chinh ma khong bao B, vi Bronze schema se phai doi theo
+- A không tự ý thêm field vào luồng chính mà không báo B, vì Bronze schema sẽ phải đổi theo
 
-## 5. Hop dong Bronze
+## 5. Hợp đồng Bronze
 
-Bronze hien tai ghi ra:
+Bronze hiện tại ghi ra:
 
-- cac field Kafka da parse o schema baseline
+- các field Kafka đã parse ở schema baseline
 - `ingested_at`
 
-Bronze phai giu dung vai tro:
+Bronze phải giữ đúng vai trò:
 
-- gan nguon nhat co the
-- xu ly nhe
-- phu hop de reprocess sau nay
+- gần nguồn nhất có thể
+- xử lý nhẹ
+- phù hợp để reprocess sau này
 
-Bronze khong nen bien thanh tang cleaning hay tang model.
+Bronze không nên biến thành tầng cleaning hay tầng model.
 
-## 6. Hop dong Silver
+## 6. Hợp đồng Silver
 
-Cot toi thieu cua Silver hien tai:
+Cột tối thiểu của Silver hiện tại:
 
-| Column | Y nghia |
+| Column | Ý nghĩa |
 | --- | --- |
-| `event_time` | thoi gian su kien goc |
-| `comment_id` | id binh luan |
+| `event_time` | thời gian sự kiện gốc |
+| `comment_id` | id bình luận |
 | `video_id` | id video |
-| `author` | ten tac gia |
-| `text` | noi dung goc |
-| `text_clean` | text da lam sach |
-| `like_count` | like da chuan hoa |
-| `reply_count` | reply da chuan hoa |
-| `is_reply` | co phai reply hay khong |
-| `lang` | ngon ngu da chuan hoa |
-| `ingested_at` | thoi diem vao Bronze |
-| `silver_processed_at` | thoi diem xu ly Silver |
-| `positive_score` | diem tich cuc baseline |
-| `negative_score` | diem tieu cuc baseline |
-| `sentiment` | nhan cam xuc cuoi cung |
+| `author` | tên tác giả |
+| `text` | nội dung gốc |
+| `text_clean` | text đã làm sạch |
+| `like_count` | like đã chuẩn hóa |
+| `reply_count` | reply đã chuẩn hóa |
+| `is_reply` | có phải reply hay không |
+| `lang` | ngôn ngữ đã chuẩn hóa |
+| `ingested_at` | thời điểm vào Bronze |
+| `silver_processed_at` | thời điểm xử lý Silver |
+| `positive_score` | điểm tích cực baseline |
+| `negative_score` | điểm tiêu cực baseline |
+| `sentiment` | nhãn cảm xúc cuối cùng |
 
-Trang thai hien tai cua Silver:
+Trạng thái hiện tại của Silver:
 
-- da lam sach text
-- da normalize null
-- da dedup theo `comment_id`
+- đã làm sạch text
+- đã normalize null
+- đã dedup theo `comment_id`
 
-Nguoi B co the mo rong Silver, nhung nen giu nhung cot toi thieu nay on dinh de Gold va lop SQL cua C khong bi gay.
+Người B có thể mở rộng Silver, nhưng nên giữ những cột tối thiểu này ổn định để Gold và lớp SQL của C không bị gãy.
 
-## 7. Hop dong Gold
+## 7. Hợp đồng Gold
 
-Cot toi thieu cua Gold hien tai:
+Cột tối thiểu của Gold hiện tại:
 
-| Column | Y nghia |
+| Column | Ý nghĩa |
 | --- | --- |
-| `event_date` | ngay suy ra tu `event_time` |
+| `event_date` | ngày suy ra từ `event_time` |
 | `video_id` | id video |
-| `sentiment` | nhom cam xuc |
-| `comment_count` | so binh luan trong nhom |
-| `avg_likes` | like trung binh |
-| `avg_replies` | reply trung binh |
-| `reply_comment_count` | so binh luan la reply |
+| `sentiment` | nhóm cảm xúc |
+| `comment_count` | số bình luận trong nhóm |
+| `avg_likes` | like trung bình |
+| `avg_replies` | reply trung bình |
+| `reply_comment_count` | số bình luận là reply |
 
-Nguoi C nen build SQL validation va dashboard tren bo toi thieu nay truoc.
+Người C nên build SQL validation và dashboard trên bộ tối thiểu này trước.
 
-Nguoi B co the them metric moi o Gold, nhung can giu bo cot baseline de C khong phai sua lai toan bo.
+Người B có thể thêm metric mới ở Gold, nhưng cần giữ bộ cột baseline để C không phải sửa lại toàn bộ.
 
-## 8. Quy tac so huu
+## 8. Quy tắc sở hữu
 
-- A so huu mapping du lieu tu YouTube API sang schema Kafka
-- B so huu Bronze, Silver, Gold va logic model
-- C so huu Metastore, dang ky bang, Thrift/JDBC va Power BI
-- chu so huu `docker-compose.yml`, `.env.example`, `README.md` va tai lieu interface nay
+- A sở hữu mapping dữ liệu từ YouTube API sang schema Kafka
+- B sở hữu Bronze, Silver, Gold và logic model
+- C sở hữu Metastore, đăng ký bảng, Thrift/JDBC và Power BI
+- chủ sở hữu `docker-compose.yml`, `.env.example`, `README.md` và tài liệu interface này
 
-## 9. Quy tac de lam song song
+## 9. Quy tắc để làm song song
 
-De khong cho nhau:
+Để không chờ nhau:
 
-- A lam theo schema Kafka toi thieu o tren
-- B dung `data/sample_comments.jsonl` de phat trien tiep trong khi cho A
-- C lam theo schema Gold toi thieu trong khi B cai tien model
+- A làm theo schema Kafka tối thiểu ở trên
+- B dùng `data/sample_comments.jsonl` để phát triển tiếp trong khi chờ A
+- C làm theo schema Gold tối thiểu trong khi B cải tiến model

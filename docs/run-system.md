@@ -1,63 +1,63 @@
 # Run System
 
-Tai lieu nay la runbook thuc dung de chay va kiem tra he thong hien tai.
+Tài liệu này là runbook thực dụng để chạy và kiểm tra hệ thống hiện tại.
 
-Chay tat ca lenh tai thu muc goc repo:
+Chạy tất cả lệnh tại thư mục gốc repo:
 
 ```powershell
 D:\AHCMUTE_HocTap\BigDataAnalysis\BT_CuoiKy\Project_nhom19_datalakehouse
 ```
 
-## 1. Dieu kien truoc khi chay
+## 1. Điều kiện trước khi chạy
 
-- Docker Desktop dang bat
-- SQL Server local dang chay
-- file `.env` da co thong so dung
-- cac port `8080`, `9871`, `8081`, `9083`, `10000` dang trong
+- Docker Desktop đang bật
+- SQL Server local đang chạy
+- file `.env` đã có thông số đúng
+- các port `8080`, `9871`, `8081`, `9083`, `10000` đang trống
 
-Neu chua co `.env` thi tao tu `.env.example`.
+Nếu chưa có `.env` thì tạo từ `.env.example`.
 
-## 2. Kiem tra cau hinh
+## 2. Kiểm tra cấu hình
 
-Kiem tra syntax cua Docker Compose:
+Kiểm tra syntax của Docker Compose:
 
 ```powershell
 docker compose config
 ```
 
-Kiem tra nhanh SQL Server local:
+Kiểm tra nhanh SQL Server local:
 
 ```powershell
 Test-NetConnection -ComputerName localhost -Port 1433
 ```
 
-## 3. Cach chay day du he thong
+## 3. Cách chạy đầy đủ hệ thống
 
-Khoi dong ha tang chinh:
+Khởi động hạ tầng chính:
 
 ```powershell
 docker compose up -d kafka kafka-ui namenode datanode hdfs-init hive-metastore spark-master spark-worker
 ```
 
-Khoi dong producer va 3 tang xu ly:
+Khởi động producer và 3 tầng xử lý:
 
 ```powershell
 docker compose up -d producer spark-bronze spark-silver spark-gold
 ```
 
-Dang ky bang external trong Spark SQL:
+Đăng ký bảng external trong Spark SQL:
 
 ```powershell
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt/sql/register_tables.sql"
 ```
 
-Khoi dong lop SQL/JDBC:
+Khởi động lớp SQL/JDBC:
 
 ```powershell
 docker compose up -d spark-thriftserver
 ```
 
-## 4. Cach chay nhanh nhat tu trang thai moi
+## 4. Cách chạy nhanh nhất từ trạng thái mới
 
 ```powershell
 docker compose up -d kafka kafka-ui namenode datanode hdfs-init producer hive-metastore spark-master spark-worker spark-bronze spark-silver spark-gold
@@ -65,58 +65,58 @@ docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt
 docker compose up -d spark-thriftserver
 ```
 
-## 5. Chay tung phan rieng le
+## 5. Chạy từng phần riêng lẻ
 
-Chi chay ha tang:
+Chỉ chạy hạ tầng:
 
 ```powershell
 docker compose up -d kafka kafka-ui namenode datanode hdfs-init hive-metastore spark-master spark-worker
 ```
 
-Chi chay producer mau:
+Chỉ chạy producer mẫu:
 
 ```powershell
 docker compose up -d producer
 docker compose logs --tail 50 producer
 ```
 
-Luu y:
+Lưu ý:
 
-- o `INGESTION_MODE=sample`, producer mac dinh gui 1 luot roi dung
-- trang thai `Exited (0)` cua producer trong sample mode la binh thuong
-- neu muon lap lai du lieu mau de test, dat `SAMPLE_LOOP=true`
+- ở `INGESTION_MODE=sample`, producer mặc định gửi 1 lượt rồi dừng
+- trạng thái `Exited (0)` của producer trong sample mode là bình thường
+- nếu muốn lặp lại dữ liệu mẫu để test, đặt `SAMPLE_LOOP=true`
 
-Chi chay Bronze:
+Chỉ chạy Bronze:
 
 ```powershell
 docker compose up -d spark-bronze
 docker compose logs --tail 100 spark-bronze
 ```
 
-Chi chay Silver:
+Chỉ chạy Silver:
 
 ```powershell
 docker compose up -d spark-silver
 docker compose logs --tail 100 spark-silver
 ```
 
-Chi chay Gold:
+Chỉ chạy Gold:
 
 ```powershell
 docker compose up -d spark-gold
 docker compose logs --tail 100 spark-gold
 ```
 
-Chi chay lop SQL/JDBC:
+Chỉ chạy lớp SQL/JDBC:
 
 ```powershell
 docker compose up -d spark-thriftserver
 docker compose ps spark-thriftserver
 ```
 
-## 6. Kiem tra nhanh sau khi khoi dong
+## 6. Kiểm tra nhanh sau khi khởi động
 
-Kiem tra container:
+Kiểm tra container:
 
 ```powershell
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
@@ -128,7 +128,7 @@ UI:
 - HDFS NameNode UI: `http://localhost:9871`
 - Spark master UI: `http://localhost:8081`
 
-Kiem tra thu muc HDFS:
+Kiểm tra thư mục HDFS:
 
 ```powershell
 docker compose exec namenode hdfs dfs -ls /
@@ -136,25 +136,25 @@ docker compose exec namenode hdfs dfs -ls /lake
 docker compose exec namenode hdfs dfs -ls /checkpoints
 ```
 
-Kiem tra file Bronze:
+Kiểm tra file Bronze:
 
 ```powershell
 docker compose exec namenode hdfs dfs -ls /lake/bronze/youtube_comments
 ```
 
-Kiem tra file Silver:
+Kiểm tra file Silver:
 
 ```powershell
 docker compose exec namenode hdfs dfs -ls /lake/silver/youtube_comments
 ```
 
-Kiem tra file Gold:
+Kiểm tra file Gold:
 
 ```powershell
 docker compose exec namenode hdfs dfs -ls /lake/gold/youtube_comment_metrics
 ```
 
-## 7. Truy van cac bang lakehouse
+## 7. Truy vấn các bảng lakehouse
 
 Xem database:
 
@@ -162,7 +162,7 @@ Xem database:
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SHOW DATABASES'"
 ```
 
-Xem bang:
+Xem bảng:
 
 ```powershell
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SHOW TABLES IN lakehouse'"
@@ -186,7 +186,7 @@ Xem nhanh Gold:
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT * FROM lakehouse.gold_youtube_comment_metrics LIMIT 10'"
 ```
 
-Kiem tra nhanh so dong:
+Kiểm tra nhanh số dòng:
 
 ```powershell
 docker compose exec spark-master /bin/bash -lc "cat >/tmp/check.sql <<'SQL'
@@ -196,7 +196,7 @@ SQL
 /opt/spark/bin/spark-sql -f /tmp/check.sql"
 ```
 
-## 8. Log hay dung khi debug
+## 8. Log hay dùng khi debug
 
 Producer:
 
@@ -234,21 +234,21 @@ Thrift Server:
 docker compose logs --tail 100 spark-thriftserver
 ```
 
-## 9. Chuan bi JDBC va Power BI
+## 9. Chuẩn bị JDBC và Power BI
 
-Neu can, tai Hive JDBC driver:
+Nếu cần, tải Hive JDBC driver:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\download_hive_jdbc.ps1
 ```
 
-JDBC endpoint hien tai:
+JDBC endpoint hiện tại:
 
 ```text
 jdbc:hive2://localhost:10000/lakehouse
 ```
 
-Thong so mac dinh:
+Thông số mặc định:
 
 - Host: `localhost`
 - Port: `10000`
@@ -256,9 +256,9 @@ Thong so mac dinh:
 - Username: `hive`
 - Password: `hive`
 
-## 10. Dung va reset
+## 10. Dừng và reset
 
-Dung toan bo:
+Dừng toàn bộ:
 
 ```powershell
 docker compose down
@@ -270,16 +270,16 @@ Reset container:
 powershell -ExecutionPolicy Bypass -File .\scripts\reset_demo.ps1
 ```
 
-Reset ca container va volume:
+Reset cả container và volume:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\reset_demo.ps1 -RemoveVolumes
 ```
 
-## 11. Muc dich cua baseline nay
+## 11. Mục đích của baseline này
 
-Bo khung nay duoc giu de moi nguoi co the bat tay vao viec ngay:
+Bộ khung này được giữ để mọi người có thể bắt tay vào việc ngay:
 
-- A lam ingestion YouTube API ma khong phai cho B, C
-- B cai tien Bronze, Silver, Gold va model tren du lieu mau
-- C kiem tra Metastore, SQL, JDBC va Power BI doc lap
+- A làm ingestion YouTube API mà không phải chờ B, C
+- B cải tiến Bronze, Silver, Gold và model trên dữ liệu mẫu
+- C kiểm tra Metastore, SQL, JDBC và Power BI độc lập
