@@ -1,0 +1,284 @@
+services:
+  kafka:
+    image: bitnami/kafka:3.5.1
+    container_name: nhom19-kafka
+    environment:
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "19092:9092"
+    volumes:
+      - kafka_data:/bitnami/kafka
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: nhom19-kafka-ui
+    depends_on:
+      - kafka
+    environment:
+      KAFKA_CLUSTERS_0_NAME: demo
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "8080:8080"
+
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: nhom19-namenode
+    environment:
+      CLUSTER_NAME: demo
+      CORE_CONF_fs_defaultFS: hdfs://namenode:8020
+      HDFS_CONF_dfs_replication: 1
+    ports:
+      - "9871:9870"
+      - "8020:8020"
+    volumes:
+      - namenode_data:/hadoop/dfs/name
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: nhom19-datanode
+    depends_on:
+      - namenode
+    environment:
+      CLUSTER_NAME: demo
+      CORE_CONF_fs_defaultFS: hdfs://namenode:8020
+      SERVICE_PRECONDITION: namenode:9870
+    ports:
+      - "9864:9864"
+    volumes:
+      - datanode_data:/hadoop/dfs/data
+
+  hdfs-init:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: nhom19-hdfs-init
+    depends_on:
+      - namenode
+      - datanode
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        until hdfs dfs -fs hdfs://namenode:8020 -ls / >/dev/null 2>&1; do
+          echo 'Waiting for HDFS...'
+          sleep 2
+        done
+        hdfs dfs -fs hdfs://namenode:8020 -mkdir -p /lake/bronze /lake/bronze/youtube_comments /lake/silver /lake/silver/youtube_comments /lake/gold /lake/gold/youtube_comment_metrics /checkpoints /user/hive/warehouse
+        hdfs dfs -fs hdfs://namenode:8020 -chmod -R 777 /lake /checkpoints
+        hdfs dfs -fs hdfs://namenode:8020 -chmod -R 777 /user/hive
+        echo 'HDFS init done.'
+    restart: "no"
+
+  hive-metastore:
+    build:
+      context: ./hive
+      dockerfile: Dockerfile
+    container_name: nhom19-hive-metastore
+    depends_on:
+      - namenode
+      - datanode
+      - hdfs-init
+    environment:
+      SQLSERVER_HOST: ${SQLSERVER_HOST:-host.docker.internal}
+      SQLSERVER_PORT: ${SQLSERVER_PORT:-1433}
+      SQLSERVER_DATABASE: ${SQLSERVER_DATABASE:-hive_metastore}
+      SQLSERVER_USERNAME: ${SQLSERVER_USERNAME:-sa}
+      SQLSERVER_PASSWORD: ${SQLSERVER_PASSWORD:-YourStrongPassword123!}
+      METASTORE_THRIFT_PORT: ${METASTORE_THRIFT_PORT:-9083}
+      METASTORE_WAREHOUSE_DIR: ${METASTORE_WAREHOUSE_DIR:-hdfs://namenode:8020/user/hive/warehouse}
+      HADOOP_CONF_DIR: /opt/hadoop-conf
+    ports:
+      - "9083:9083"
+    volumes:
+      - ./hadoop/conf:/opt/hadoop-conf:ro
+
+  producer:
+    image: python:3.11-slim
+    container_name: nhom19-producer
+    depends_on:
+      - kafka
+    working_dir: /app
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        pip install --no-cache-dir -r requirements.txt
+        python producer.py
+    environment:
+      INGESTION_MODE: ${INGESTION_MODE:-sample}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_TOPIC: youtube-comments
+      SAMPLE_DATA_PATH: /data/sample_comments.jsonl
+      REPLAY_DELAY_MS: "300"
+      SAMPLE_LOOP: ${SAMPLE_LOOP:-false}
+      KAFKA_RETRY_DELAY_SECONDS: "5"
+    restart: "no"
+    volumes:
+      - ./producer:/app
+      - ./data:/data:ro
+
+  spark-master:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: nhom19-spark-master
+    user: "0:0"
+    depends_on:
+      - kafka
+      - namenode
+      - hive-metastore
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.master.Master
+      - --host
+      - spark-master
+      - --port
+      - "7077"
+      - --webui-port
+      - "8080"
+    environment:
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      SPARK_LOCAL_DIRS: /tmp/spark-local
+    ports:
+      - "8081:8080"
+      - "7077:7077"
+    volumes:
+      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+      - ./spark/sql:/opt/sql:ro
+
+  spark-worker:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: nhom19-spark-worker
+    user: "0:0"
+    depends_on:
+      - spark-master
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.worker.Worker
+      - spark://spark-master:7077
+    environment:
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      SPARK_LOCAL_DIRS: /tmp/spark-local
+      SPARK_WORKER_DIR: /tmp/spark-work
+      PYSPARK_PYTHON: /usr/bin/python3
+    ports:
+      - "8082:8081"
+    volumes:
+      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+
+  spark-bronze:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: nhom19-spark-bronze
+    user: "0:0"
+    depends_on:
+      - spark-master
+      - producer
+    command:
+      - /opt/spark/bin/spark-submit
+      - /opt/jobs/bronze_stream.py
+    environment:
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      SPARK_LOCAL_DIRS: /tmp/spark-local
+      PYSPARK_PYTHON: /usr/bin/python3
+    volumes:
+      - ./spark/jobs:/opt/jobs:ro
+      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+    restart: on-failure
+
+  spark-silver:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: nhom19-spark-silver
+    user: "0:0"
+    depends_on:
+      - spark-master
+      - spark-bronze
+      - hdfs-init
+    command:
+      - /opt/spark/bin/spark-submit
+      - /opt/jobs/silver_stream.py
+    environment:
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      SPARK_LOCAL_DIRS: /tmp/spark-local
+      PYSPARK_PYTHON: /usr/bin/python3
+    volumes:
+      - ./spark/jobs:/opt/jobs:ro
+      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+    restart: on-failure
+
+  spark-gold:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: nhom19-spark-gold
+    user: "0:0"
+    depends_on:
+      - spark-master
+      - spark-silver
+      - hdfs-init
+    command:
+      - /opt/spark/bin/spark-submit
+      - /opt/jobs/gold_stream.py
+    environment:
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      SPARK_LOCAL_DIRS: /tmp/spark-local
+      PYSPARK_PYTHON: /usr/bin/python3
+    volumes:
+      - ./spark/jobs:/opt/jobs:ro
+      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+    restart: on-failure
+
+  spark-thriftserver:
+    build:
+      context: ./spark
+      dockerfile: Dockerfile
+    container_name: nhom19-spark-thriftserver
+    user: "0:0"
+    depends_on:
+      - spark-master
+      - spark-worker
+      - hive-metastore
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        export SPARK_NO_DAEMONIZE=true
+        /opt/spark/sbin/start-thriftserver.sh \
+          --master spark://spark-master:7077 \
+          --conf spark.sql.catalogImplementation=hive \
+          --conf spark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083 \
+          --conf spark.sql.warehouse.dir=hdfs://namenode:8020/user/hive/warehouse \
+          --hiveconf hive.server2.thrift.port=10000 \
+          --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
+          --hiveconf hive.server2.thrift.resultset.default.fetch.size=1000
+    environment:
+      HADOOP_CONF_DIR: /opt/spark/conf/hadoop
+      SPARK_LOCAL_DIRS: /tmp/spark-local
+      PYSPARK_PYTHON: /usr/bin/python3
+    ports:
+      - "10000:10000"
+      - "4040:4040"
+    volumes:
+      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+
+volumes:
+  kafka_data:
+  namenode_data:
+  datanode_data:

@@ -1,0 +1,10 @@
+{"event_time":"2026-04-11T09:00:01Z","comment_id":"c001","video_id":"v001","author":"user_a","text":"Video nay hay qua, cam on ban!","like_count":12,"reply_count":0,"is_reply":false,"lang":"vi"}
+{"event_time":"2026-04-11T09:00:05Z","comment_id":"c002","video_id":"v001","author":"user_b","text":"Noi that thi minh thay hoi chan.","like_count":1,"reply_count":0,"is_reply":false,"lang":"vi"}
+{"event_time":"2026-04-11T09:00:09Z","comment_id":"c003","video_id":"v002","author":"user_c","text":"Tot, rat xuat sac.","like_count":8,"reply_count":1,"is_reply":false,"lang":"vi"}
+{"event_time":"2026-04-11T09:00:13Z","comment_id":"c004","video_id":"v002","author":"user_d","text":"Khong hay lam, that vong.","like_count":0,"reply_count":0,"is_reply":false,"lang":"vi"}
+{"event_time":"2026-04-11T09:00:18Z","comment_id":"c005","video_id":"v003","author":"user_e","text":"Cam on vi huong dan rat de hieu.","like_count":6,"reply_count":0,"is_reply":false,"lang":"vi"}
+{"event_time":"2026-04-11T09:00:22Z","comment_id":"c006","video_id":"v003","author":"user_f","text":"Like manh, noi dung huu ich.","like_count":14,"reply_count":2,"is_reply":false,"lang":"vi"}
+{"event_time":"2026-04-11T09:00:25Z","comment_id":"c007","video_id":"v001","author":"user_g","text":"Minh khong thich cach trinh bay nay.","like_count":0,"reply_count":0,"is_reply":false,"lang":"vi"}
+{"event_time":"2026-04-11T09:00:29Z","comment_id":"c008","video_id":"v003","author":"user_h","text":"Qua te, xem met qua.","like_count":0,"reply_count":0,"is_reply":false,"lang":"vi"}
+{"event_time":"2026-04-11T09:00:34Z","comment_id":"c009","video_id":"v002","author":"user_i","text":"Yeu cach ban trinh bay, rat hay.","like_count":9,"reply_count":1,"is_reply":false,"lang":"vi"}
+{"event_time":"2026-04-11T09:00:38Z","comment_id":"c010","video_id":"v001","author":"user_j","text":"Binh thuong, minh xem thu.","like_count":2,"reply_count":0,"is_reply":false,"lang":"vi"}
