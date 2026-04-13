@@ -32,9 +32,11 @@ Hệ thống hiện tại đã có sẵn:
 
 ## Đọc tài liệu theo thứ tự
 
+- `docs/handover-guide.md`: file định hướng đọc nhanh toàn bộ repo
 - `docs/run-system.md`: cách chạy hệ thống và kiểm tra từng phần
 - `docs/interfaces.md`: hợp đồng schema, topic, path và bảng dùng chung
-- `docs/team-assignment.md`: bảng phân công chi tiết cho A, B, C
+- `docs/query-guide.md`: bộ truy vấn kiểm tra toàn hệ thống
+- `docs/demo-playbook.md`: kịch bản demo 1 mạch
 
 ## Nguyên tắc chung
 

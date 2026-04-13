@@ -18,6 +18,7 @@ def build_schema() -> StructType:
     return StructType(
         [
             StructField("event_time", TimestampType(), True),
+            StructField("collected_at", TimestampType(), True),
             StructField("comment_id", StringType(), True),
             StructField("video_id", StringType(), True),
             StructField("author", StringType(), True),
@@ -25,7 +26,9 @@ def build_schema() -> StructType:
             StructField("like_count", IntegerType(), True),
             StructField("reply_count", IntegerType(), True),
             StructField("is_reply", BooleanType(), True),
+            StructField("parent_comment_id", StringType(), True),
             StructField("lang", StringType(), True),
+            StructField("source", StringType(), True),
         ]
     )
 
@@ -47,14 +50,16 @@ def main() -> None:
         .load()
     )
 
+    parsed_stream = raw_stream.select(
+        from_json(
+            col("value").cast("string"),
+            schema,
+            {"timestampFormat": "yyyy-MM-dd'T'HH:mm:ssX"},
+        ).alias("json")
+    )
+
     bronze_df = (
-        raw_stream.select(
-            from_json(
-                col("value").cast("string"),
-                schema,
-                {"timestampFormat": "yyyy-MM-dd'T'HH:mm:ssX"},
-            ).alias("json")
-        )
+        parsed_stream.filter(col("json").isNotNull())
         .select("json.*")
         .withColumn("ingested_at", current_timestamp())
     )

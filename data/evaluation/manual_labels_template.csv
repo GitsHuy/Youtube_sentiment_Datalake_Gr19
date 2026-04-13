@@ -1,0 +1,4 @@
+comment_id,video_id,text,manual_label,notes
+example_comment_001,target_video_id,"This video is amazing",positive,
+example_comment_002,target_video_id,"Who is here in 2026?",neutral,
+example_comment_003,target_video_id,"This is boring",negative,

@@ -1,146 +1,154 @@
-# Interfaces
+# Hợp đồng dữ liệu và giao tiếp giữa các lớp
 
-Tài liệu này khóa các điểm giao tiếp dùng chung để A, B, C có thể làm song song mà không va nhau.
+Tài liệu này khóa những điểm giao tiếp chính để mọi thay đổi sau này vẫn bám cùng một chuẩn.
 
-## 1. Mục tiêu chung
+## 1. Phạm vi bài toán hiện tại
 
-Luồng nghiệp vụ nhóm đang nhắm tới:
-
-- lấy bình luận từ đúng 1 video YouTube thông qua `videoId`
-- đẩy bình luận vào Kafka
-- lưu qua Bronze, Silver, Gold
-- đăng ký metadata qua Hive Metastore
-- mở dữ liệu Gold cho SQL và Power BI
-
-Baseline hiện tại vẫn giữ `data/sample_comments.jsonl` làm nguồn fallback để mỗi thành viên test độc lập.
+- Ingestion lấy bình luận từ đúng `1 video YouTube` tại một thời điểm chạy
+- Dữ liệu đi qua `Kafka -> Bronze -> Silver -> Gold -> Thrift/JDBC`
+- Dữ liệu Bronze, Silver, Gold đang lưu dưới dạng `PARQUET`
+- Metadata bảng được quản lý qua `Hive Metastore`
 
 ## 2. Hằng số dùng chung
 
-Kafka topic:
+Kafka:
 
-- `youtube-comments`
+- Topic: `youtube-comments`
 
-Đường dẫn HDFS:
+HDFS:
 
 - Bronze: `hdfs://namenode:8020/lake/bronze/youtube_comments`
 - Silver: `hdfs://namenode:8020/lake/silver/youtube_comments`
-- Gold: `hdfs://namenode:8020/lake/gold/youtube_comment_metrics`
+- Gold summary: `hdfs://namenode:8020/lake/gold/youtube_comment_metrics`
+- Gold breakdown: `hdfs://namenode:8020/lake/gold/youtube_sentiment_breakdown`
 
-Database và bảng Hive:
+Hive:
 
-- database: `lakehouse`
-- bảng Bronze: `lakehouse.bronze_youtube_comments`
-- bảng Silver: `lakehouse.silver_youtube_comments`
-- bảng Gold: `lakehouse.gold_youtube_comment_metrics`
+- Database: `lakehouse`
+- Bronze table: `lakehouse.bronze_youtube_comments`
+- Silver table: `lakehouse.silver_youtube_comments`
+- Gold summary table: `lakehouse.gold_youtube_comment_metrics`
+- Gold breakdown table: `lakehouse.gold_youtube_sentiment_breakdown`
 
-Những tên này phải giữ ổn định nếu chủ chưa cho phép đổi.
+## 3. Schema chuẩn cho một comment YouTube
 
-## 3. Schema Kafka hiện tại
+Các trường nền mà producer, Kafka, Bronze và Silver phải cùng hiểu:
 
-Đây là schema mà job Bronze hiện tại đã hỗ trợ.
-
-| Field | Type | Bắt buộc | Ghi chú |
+| Trường | Kiểu | Bắt buộc | Ý nghĩa |
 | --- | --- | --- | --- |
-| `event_time` | timestamp string | có | Spark đang parse về timestamp |
-| `comment_id` | string | có | id duy nhất của bình luận |
+| `event_time` | timestamp | có | thời điểm comment xuất hiện trên YouTube |
+| `collected_at` | timestamp | có | thời điểm collector lấy được comment |
+| `comment_id` | string | có | khóa nghiệp vụ duy nhất của comment |
 | `video_id` | string | có | id video đang theo dõi |
-| `author` | string | có | tên tác giả bình luận |
-| `text` | string | có | nội dung gốc |
-| `like_count` | integer | có | số lượt like |
-| `reply_count` | integer | có | có thể bằng `0` nếu là reply |
-| `is_reply` | boolean | có | `false` nếu là top-level, `true` nếu là reply |
-| `lang` | string | không | nếu thiếu thì đưa về `unknown` |
+| `author` | string | có | tên hiển thị của người bình luận |
+| `text` | string | có | nội dung gốc của comment |
+| `like_count` | int | có | số like tại thời điểm thu thập |
+| `reply_count` | int | có | số reply của comment |
+| `is_reply` | boolean | có | `true` nếu là reply |
+| `parent_comment_id` | string/null | không | id comment cha nếu là reply |
+| `lang` | string | không | mã ngôn ngữ hoặc `unknown` |
+| `source` | string | có | nguồn dữ liệu như `sample_file` hoặc `youtube_api` |
 
-Người A phải giữ tối thiểu schema này để Bronze không vỡ.
+## 4. Hợp đồng của lớp Bronze
 
-## 4. Schema ingestion mở rộng để xét ở bước sau
+Bronze giữ dữ liệu raw nhưng đã parse JSON thành công.
 
-Những field dưới đây nên thêm ở vòng sau khi A và B thống nhất:
+Bronze phải có:
 
-| Field | Type | Bắt buộc | Người liên quan | Ghi chú |
-| --- | --- | --- | --- | --- |
-| `parent_comment_id` | string | không | A + B | để truy vết reply |
-| `source` | string | có | A | gợi ý `youtube_api` hoặc `sample_file` |
-| `collected_at` | timestamp string | có | A | thời điểm collector lấy dữ liệu |
-
-Quy tắc:
-
-- A không tự ý thêm field vào luồng chính mà không báo B, vì Bronze schema sẽ phải đổi theo
-
-## 5. Hợp đồng Bronze
-
-Bronze hiện tại ghi ra:
-
-- các field Kafka đã parse ở schema baseline
+- toàn bộ trường chuẩn của comment
 - `ingested_at`
 
-Bronze phải giữ đúng vai trò:
+Bronze không làm:
 
-- gần nguồn nhất có thể
-- xử lý nhẹ
-- phù hợp để reprocess sau này
+- suy luận sentiment
+- tổng hợp business metric
+- làm sạch text nặng
 
-Bronze không nên biến thành tầng cleaning hay tầng model.
+## 5. Hợp đồng của lớp Silver
 
-## 6. Hợp đồng Silver
+Silver kế thừa Bronze và bổ sung xử lý làm sạch, deduplicate và sentiment.
 
-Cột tối thiểu của Silver hiện tại:
+Silver hiện có các nhóm cột chính:
 
-| Column | Ý nghĩa |
-| --- | --- |
-| `event_time` | thời gian sự kiện gốc |
-| `comment_id` | id bình luận |
-| `video_id` | id video |
-| `author` | tên tác giả |
-| `text` | nội dung gốc |
-| `text_clean` | text đã làm sạch |
-| `like_count` | like đã chuẩn hóa |
-| `reply_count` | reply đã chuẩn hóa |
-| `is_reply` | có phải reply hay không |
-| `lang` | ngôn ngữ đã chuẩn hóa |
-| `ingested_at` | thời điểm vào Bronze |
-| `silver_processed_at` | thời điểm xử lý Silver |
-| `positive_score` | điểm tích cực baseline |
-| `negative_score` | điểm tiêu cực baseline |
-| `sentiment` | nhãn cảm xúc cuối cùng |
+- Cột nguồn: `event_time`, `collected_at`, `comment_id`, `video_id`, `author`, `text`, `like_count`, `reply_count`, `is_reply`, `parent_comment_id`, `lang`, `source`, `ingested_at`
+- Cột làm sạch: `text_clean`, `text_length`, `collected_delay_seconds`, `silver_processed_at`
+- Cột sentiment: `positive_score`, `negative_score`, `sentiment`
 
-Trạng thái hiện tại của Silver:
+Quy ước checkpoint 5:
 
-- đã làm sạch text
-- đã normalize null
-- đã dedup theo `comment_id`
+- Model mặc định: `cardiffnlp/twitter-xlm-roberta-base-sentiment-multilingual`
+- Nhãn đầu ra luôn chuẩn hóa về `positive`, `neutral`, `negative`
+- `positive_score` và `negative_score` đang scale về thang `0-100`
+- Có thể bật fallback keyword qua `SENTIMENT_FALLBACK_TO_KEYWORD=true`
+- Khi benchmark nghiêm túc, nên đặt `SENTIMENT_FALLBACK_TO_KEYWORD=false`
 
-Người B có thể mở rộng Silver, nhưng nên giữ những cột tối thiểu này ổn định để Gold và lớp SQL của C không bị gãy.
+## 6. Hợp đồng của lớp Gold
 
-## 7. Hợp đồng Gold
+Từ checkpoint 6, Gold được tách thành `2` bảng để thuận tiện cho dashboard.
 
-Cột tối thiểu của Gold hiện tại:
+### Gold summary
 
-| Column | Ý nghĩa |
-| --- | --- |
-| `event_date` | ngày suy ra từ `event_time` |
-| `video_id` | id video |
-| `sentiment` | nhóm cảm xúc |
-| `comment_count` | số bình luận trong nhóm |
-| `avg_likes` | like trung bình |
-| `avg_replies` | reply trung bình |
-| `reply_comment_count` | số bình luận là reply |
+Table: `lakehouse.gold_youtube_comment_metrics`
 
-Người C nên build SQL validation và dashboard trên bộ tối thiểu này trước.
+Mục đích:
 
-Người B có thể thêm metric mới ở Gold, nhưng cần giữ bộ cột baseline để C không phải sửa lại toàn bộ.
+- lưu các chỉ số tổng hợp theo `event_date + video_id`
 
-## 8. Quy tắc sở hữu
+Các cột:
 
-- A sở hữu mapping dữ liệu từ YouTube API sang schema Kafka
-- B sở hữu Bronze, Silver, Gold và logic model
-- C sở hữu Metastore, đăng ký bảng, Thrift/JDBC và Power BI
-- chủ sở hữu `docker-compose.yml`, `.env.example`, `README.md` và tài liệu interface này
+- `event_date`
+- `video_id`
+- `total_comments`
+- `top_level_comment_count`
+- `reply_comment_count`
+- `unique_author_count`
+- `total_likes`
+- `avg_likes_per_comment`
+- `avg_reply_count`
+- `avg_text_length`
+- `avg_collected_delay_seconds`
+- `positive_comment_count`
+- `neutral_comment_count`
+- `negative_comment_count`
+- `positive_ratio`
+- `neutral_ratio`
+- `negative_ratio`
+- `reply_ratio`
+- `engagement_score`
 
-## 9. Quy tắc để làm song song
+### Gold sentiment breakdown
 
-Để không chờ nhau:
+Table: `lakehouse.gold_youtube_sentiment_breakdown`
 
-- A làm theo schema Kafka tối thiểu ở trên
-- B dùng `data/sample_comments.jsonl` để phát triển tiếp trong khi chờ A
-- C làm theo schema Gold tối thiểu trong khi B cải tiến model
+Mục đích:
+
+- lưu breakdown theo `event_date + video_id + sentiment`
+
+Các cột:
+
+- `event_date`
+- `video_id`
+- `sentiment`
+- `comment_count`
+- `comment_ratio`
+- `avg_likes`
+- `avg_replies`
+- `reply_comment_count`
+- `avg_text_length`
+
+## 7. Quy tắc nghiệp vụ đang áp dụng
+
+- `comment_id` là khóa deduplicate chính ở Silver
+- `collected_at` phải lớn hơn hoặc bằng `event_time`
+- Reply phải có `parent_comment_id`
+- Text rỗng sau khi làm sạch sẽ bị loại ở Silver
+- Một bài test “1 video” nên giữ cùng một `video_id` trong toàn bộ lần ingest đó
+
+## 8. Tài liệu và script liên quan
+
+- Đánh giá model: `scripts/evaluate_seed_labels.py`
+- Seed labels 100 comment: `data/evaluation/assistant_seed_labels_100.csv`
+- Kết quả so sánh model: `data/evaluation/model_vs_seed_labels_100.csv`
+- Tóm tắt chỉ số đánh giá: `data/evaluation/model_vs_seed_labels_100_summary.json`
+- Kiểm tra chất lượng Gold: `spark/sql/checkpoint6_gold_quality_checks.sql`
+- Smoke test Thrift: `scripts/smoke_thriftserver.ps1`

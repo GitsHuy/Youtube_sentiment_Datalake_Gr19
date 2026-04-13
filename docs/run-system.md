@@ -1,6 +1,4 @@
-# Run System
-
-Tài liệu này là runbook thực dụng để chạy và kiểm tra hệ thống hiện tại.
+# Hướng dẫn chạy hệ thống
 
 Chạy tất cả lệnh tại thư mục gốc repo:
 
@@ -12,121 +10,57 @@ D:\AHCMUTE_HocTap\BigDataAnalysis\BT_CuoiKy\Project_nhom19_datalakehouse
 
 - Docker Desktop đang bật
 - SQL Server local đang chạy
-- file `.env` đã có thông số đúng
-- các port `8080`, `9871`, `8081`, `9083`, `10000` đang trống
+- `.env` đã có giá trị đúng cho `YOUTUBE_API_KEY`, `YOUTUBE_VIDEO_ID` nếu dùng ingestion thật
+- Các port chính còn trống: `8080`, `8081`, `9083`, `9871`, `10000`
 
-Nếu chưa có `.env` thì tạo từ `.env.example`.
+Nếu chưa có `.env`, tạo từ `.env.example`.
 
-## 2. Kiểm tra cấu hình
+## 2. Khởi động nhanh toàn hệ thống
 
-Kiểm tra syntax của Docker Compose:
+Khởi động hạ tầng và pipeline:
+
+```powershell
+docker compose up -d kafka kafka-ui namenode datanode hdfs-init hive-metastore spark-master spark-worker
+docker compose up -d producer spark-bronze spark-silver spark-gold
+docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt/sql/register_tables.sql"
+docker compose up -d spark-thriftserver
+```
+
+Nếu muốn kiểm tra cú pháp Compose trước:
 
 ```powershell
 docker compose config
 ```
 
-Kiểm tra nhanh SQL Server local:
+## 3. Chạy ingestion thật từ YouTube API
 
-```powershell
-Test-NetConnection -ComputerName localhost -Port 1433
+Cập nhật `.env`:
+
+```env
+INGESTION_MODE=youtube_api
+YOUTUBE_API_KEY=your_api_key
+YOUTUBE_VIDEO_ID=your_video_id
+YOUTUBE_ORDER=time
+YOUTUBE_MAX_RESULTS=100
+YOUTUBE_PAGE_LIMIT=5
+YOUTUBE_RETRY_DELAY_SECONDS=5
+YOUTUBE_PUBLISH_DELAY_MS=0
 ```
 
-## 3. Cách chạy đầy đủ hệ thống
-
-Khởi động hạ tầng chính:
-
-```powershell
-docker compose up -d kafka kafka-ui namenode datanode hdfs-init hive-metastore spark-master spark-worker
-```
-
-Khởi động producer và 3 tầng xử lý:
-
-```powershell
-docker compose up -d producer spark-bronze spark-silver spark-gold
-```
-
-Đăng ký bảng external trong Spark SQL:
-
-```powershell
-docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt/sql/register_tables.sql"
-```
-
-Khởi động lớp SQL/JDBC:
-
-```powershell
-docker compose up -d spark-thriftserver
-```
-
-## 4. Cách chạy nhanh nhất từ trạng thái mới
-
-```powershell
-docker compose up -d kafka kafka-ui namenode datanode hdfs-init producer hive-metastore spark-master spark-worker spark-bronze spark-silver spark-gold
-docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt/sql/register_tables.sql"
-docker compose up -d spark-thriftserver
-```
-
-## 5. Chạy từng phần riêng lẻ
-
-Chỉ chạy hạ tầng:
-
-```powershell
-docker compose up -d kafka kafka-ui namenode datanode hdfs-init hive-metastore spark-master spark-worker
-```
-
-Chỉ chạy producer mẫu:
+Khởi động producer:
 
 ```powershell
 docker compose up -d producer
-docker compose logs --tail 50 producer
+docker compose logs --tail 100 producer
 ```
 
 Lưu ý:
 
-- ở `INGESTION_MODE=sample`, producer mặc định gửi 1 lượt rồi dừng
-- trạng thái `Exited (0)` của producer trong sample mode là bình thường
-- nếu muốn lặp lại dữ liệu mẫu để test, đặt `SAMPLE_LOOP=true`
+- `YOUTUBE_VIDEO_ID` có thể là `videoId` thuần hoặc URL YouTube
+- Producer hiện tại chạy theo từng lượt lấy dữ liệu, chưa phải polling vô hạn
+- Nếu comment API trả về bị rỗng `text`, producer sẽ bỏ qua record đó và ghi log
 
-Chỉ chạy Bronze:
-
-```powershell
-docker compose up -d spark-bronze
-docker compose logs --tail 100 spark-bronze
-```
-
-Chỉ chạy Silver:
-
-```powershell
-docker compose up -d spark-silver
-docker compose logs --tail 100 spark-silver
-```
-
-Chỉ chạy Gold:
-
-```powershell
-docker compose up -d spark-gold
-docker compose logs --tail 100 spark-gold
-```
-
-Chỉ chạy lớp SQL/JDBC:
-
-```powershell
-docker compose up -d spark-thriftserver
-docker compose ps spark-thriftserver
-```
-
-## 6. Kiểm tra nhanh sau khi khởi động
-
-Kiểm tra container:
-
-```powershell
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-```
-
-UI:
-
-- Kafka UI: `http://localhost:8080`
-- HDFS NameNode UI: `http://localhost:9871`
-- Spark master UI: `http://localhost:8081`
+## 4. Kiểm tra HDFS và dữ liệu các lớp
 
 Kiểm tra thư mục HDFS:
 
@@ -136,129 +70,117 @@ docker compose exec namenode hdfs dfs -ls /lake
 docker compose exec namenode hdfs dfs -ls /checkpoints
 ```
 
-Kiểm tra file Bronze:
+Kiểm tra từng lớp:
 
 ```powershell
 docker compose exec namenode hdfs dfs -ls /lake/bronze/youtube_comments
-```
-
-Kiểm tra file Silver:
-
-```powershell
 docker compose exec namenode hdfs dfs -ls /lake/silver/youtube_comments
+docker compose exec namenode hdfs dfs -ls /lake/gold/youtube_comment_metrics
+docker compose exec namenode hdfs dfs -ls /lake/gold/youtube_sentiment_breakdown
 ```
 
-Kiểm tra file Gold:
+## 5. Truy vấn nhanh bằng Spark SQL
+
+Đăng ký lại bảng external nếu vừa khởi động lại metastore:
 
 ```powershell
-docker compose exec namenode hdfs dfs -ls /lake/gold/youtube_comment_metrics
+docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt/sql/register_tables.sql"
 ```
 
-## 7. Truy vấn các bảng lakehouse
-
-Xem database:
+Xem database và bảng:
 
 ```powershell
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SHOW DATABASES'"
-```
-
-Xem bảng:
-
-```powershell
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SHOW TABLES IN lakehouse'"
 ```
 
-Xem nhanh Bronze:
+Xem mẫu dữ liệu:
 
 ```powershell
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT * FROM lakehouse.bronze_youtube_comments LIMIT 5'"
-```
-
-Xem nhanh Silver:
-
-```powershell
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT comment_id, text_clean, sentiment FROM lakehouse.silver_youtube_comments LIMIT 10'"
-```
-
-Xem nhanh Gold:
-
-```powershell
 docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT * FROM lakehouse.gold_youtube_comment_metrics LIMIT 10'"
+docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT * FROM lakehouse.gold_youtube_sentiment_breakdown LIMIT 10'"
 ```
 
-Kiểm tra nhanh số dòng:
+## 6. Đánh giá model sentiment của checkpoint 5
+
+Chạy script đánh giá với bộ `100` comment seed:
 
 ```powershell
-docker compose exec spark-master /bin/bash -lc "cat >/tmp/check.sql <<'SQL'
-SELECT COUNT(*) AS silver_rows FROM lakehouse.silver_youtube_comments;
-SELECT COUNT(*) AS gold_rows FROM lakehouse.gold_youtube_comment_metrics;
-SQL
-/opt/spark/bin/spark-sql -f /tmp/check.sql"
+python .\scripts\evaluate_seed_labels.py
 ```
 
-## 8. Log hay dùng khi debug
+Đầu ra:
 
-Producer:
+- `data/evaluation/model_vs_seed_labels_100.csv`
+- `data/evaluation/model_vs_seed_labels_100_summary.json`
+
+Khi benchmark nghiêm túc, nên tắt fallback để biết chắc kết quả là của transformer:
+
+```env
+SENTIMENT_FALLBACK_TO_KEYWORD=false
+```
+
+## 7. Kiểm tra chất lượng Gold của checkpoint 6
+
+Chạy bộ kiểm tra:
 
 ```powershell
-docker compose logs --tail 100 producer
+docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt/sql/checkpoint6_gold_quality_checks.sql"
 ```
 
-Bronze:
+Nếu Docker Desktop đang chập chờn và lệnh SQL dài dễ treo, vẫn nên kiểm tra tối thiểu:
 
 ```powershell
-docker compose logs --tail 100 spark-bronze
+docker compose exec namenode hdfs dfs -ls /lake/gold/youtube_comment_metrics
+docker compose exec namenode hdfs dfs -ls /lake/gold/youtube_sentiment_breakdown
 ```
 
-Silver:
+## 8. Kiểm tra Spark Thrift Server và JDBC ở checkpoint 7
+
+Chạy smoke test:
 
 ```powershell
-docker compose logs --tail 100 spark-silver
+powershell -ExecutionPolicy Bypass -File .\scripts\smoke_thriftserver.ps1
 ```
 
-Gold:
+Script sẽ:
 
-```powershell
-docker compose logs --tail 100 spark-gold
-```
+- khởi động `spark-thriftserver`
+- chờ port `10000`
+- chạy lại `register_tables.sql`
+- kiểm tra `SHOW TABLES IN lakehouse`
 
-Metastore:
+Thông số JDBC:
 
-```powershell
-docker compose logs --tail 100 hive-metastore
-```
-
-Thrift Server:
-
-```powershell
-docker compose logs --tail 100 spark-thriftserver
-```
-
-## 9. Chuẩn bị JDBC và Power BI
-
-Nếu cần, tải Hive JDBC driver:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\download_hive_jdbc.ps1
-```
-
-JDBC endpoint hiện tại:
-
-```text
-jdbc:hive2://localhost:10000/lakehouse
-```
-
-Thông số mặc định:
-
+- Driver: `Apache Hive 2`
 - Host: `localhost`
 - Port: `10000`
 - Database: `lakehouse`
-- Username: `hive`
-- Password: `hive`
+- Authentication: `None`
+- JDBC URL: `jdbc:hive2://localhost:10000/lakehouse`
 
-## 10. Dừng và reset
+## 9. Nếu Docker Desktop báo `Internal Server Error`
 
-Dừng toàn bộ:
+Đây là lỗi môi trường đã lặp lại nhiều lần trên máy hiện tại. Cách khôi phục nhanh:
+
+```powershell
+Get-Process -Name 'Docker Desktop','com.docker.backend','com.docker.build','com.docker.dev-envs' -ErrorAction SilentlyContinue | Stop-Process -Force
+Start-Sleep -Seconds 8
+Start-Process 'C:\Program Files\Docker\Docker\Docker Desktop.exe'
+docker context use desktop-linux
+```
+
+Sau khi Docker lên lại, chạy lại:
+
+```powershell
+docker compose up -d kafka kafka-ui namenode datanode hdfs-init hive-metastore spark-master spark-worker
+docker compose up -d producer spark-bronze spark-silver spark-gold
+docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt/sql/register_tables.sql"
+```
+
+## 10. Dừng hệ thống
 
 ```powershell
 docker compose down
@@ -270,16 +192,8 @@ Reset container:
 powershell -ExecutionPolicy Bypass -File .\scripts\reset_demo.ps1
 ```
 
-Reset cả container và volume:
+Reset cả volume:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\reset_demo.ps1 -RemoveVolumes
 ```
-
-## 11. Mục đích của baseline này
-
-Bộ khung này được giữ để mọi người có thể bắt tay vào việc ngay:
-
-- A làm ingestion YouTube API mà không phải chờ B, C
-- B cải tiến Bronze, Silver, Gold và model trên dữ liệu mẫu
-- C kiểm tra Metastore, SQL, JDBC và Power BI độc lập

@@ -69,7 +69,7 @@ services:
           echo 'Waiting for HDFS...'
           sleep 2
         done
-        hdfs dfs -fs hdfs://namenode:8020 -mkdir -p /lake/bronze /lake/bronze/youtube_comments /lake/silver /lake/silver/youtube_comments /lake/gold /lake/gold/youtube_comment_metrics /checkpoints /user/hive/warehouse
+        hdfs dfs -fs hdfs://namenode:8020 -mkdir -p /lake/bronze /lake/bronze/youtube_comments /lake/silver /lake/silver/youtube_comments /lake/gold /lake/gold/youtube_comment_metrics /lake/gold/youtube_sentiment_breakdown /checkpoints /user/hive/warehouse
         hdfs dfs -fs hdfs://namenode:8020 -chmod -R 777 /lake /checkpoints
         hdfs dfs -fs hdfs://namenode:8020 -chmod -R 777 /user/hive
         echo 'HDFS init done.'
@@ -112,6 +112,13 @@ services:
         python producer.py
     environment:
       INGESTION_MODE: ${INGESTION_MODE:-sample}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
+      YOUTUBE_VIDEO_ID: ${YOUTUBE_VIDEO_ID:-}
+      YOUTUBE_ORDER: ${YOUTUBE_ORDER:-time}
+      YOUTUBE_MAX_RESULTS: ${YOUTUBE_MAX_RESULTS:-100}
+      YOUTUBE_PAGE_LIMIT: ${YOUTUBE_PAGE_LIMIT:-5}
+      YOUTUBE_RETRY_DELAY_SECONDS: ${YOUTUBE_RETRY_DELAY_SECONDS:-5}
+      YOUTUBE_PUBLISH_DELAY_MS: ${YOUTUBE_PUBLISH_DELAY_MS:-0}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: youtube-comments
       SAMPLE_DATA_PATH: /data/sample_comments.jsonl
@@ -215,10 +222,16 @@ services:
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
       SPARK_LOCAL_DIRS: /tmp/spark-local
       PYSPARK_PYTHON: /usr/bin/python3
+      SENTIMENT_MODE: ${SENTIMENT_MODE:-transformer}
+      SENTIMENT_MODEL_NAME: ${SENTIMENT_MODEL_NAME:-cardiffnlp/twitter-xlm-roberta-base-sentiment-multilingual}
+      SENTIMENT_BATCH_SIZE: ${SENTIMENT_BATCH_SIZE:-8}
+      SENTIMENT_MAX_LENGTH: ${SENTIMENT_MAX_LENGTH:-256}
+      SENTIMENT_FALLBACK_TO_KEYWORD: ${SENTIMENT_FALLBACK_TO_KEYWORD:-true}
     volumes:
       - ./spark/jobs:/opt/jobs:ro
       - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
       - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+      - hf_cache:/root/.cache/huggingface
     restart: on-failure
 
   spark-gold:
@@ -258,14 +271,26 @@ services:
       - /bin/bash
       - -lc
       - |
+        until bash -c '</dev/tcp/hive-metastore/9083' >/dev/null 2>&1; do
+          echo 'Waiting for hive-metastore:9083...'
+          sleep 3
+        done
+        until bash -c '</dev/tcp/spark-master/7077' >/dev/null 2>&1; do
+          echo 'Waiting for spark-master:7077...'
+          sleep 3
+        done
         export SPARK_NO_DAEMONIZE=true
         /opt/spark/sbin/start-thriftserver.sh \
           --master spark://spark-master:7077 \
           --conf spark.sql.catalogImplementation=hive \
           --conf spark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083 \
           --conf spark.sql.warehouse.dir=hdfs://namenode:8020/user/hive/warehouse \
+          --conf spark.sql.hive.thriftServer.incrementalCollect=true \
           --hiveconf hive.server2.thrift.port=10000 \
           --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
+          --hiveconf hive.server2.authentication=NONE \
+          --hiveconf hive.server2.enable.doAs=false \
+          --hiveconf hive.server2.transport.mode=binary \
           --hiveconf hive.server2.thrift.resultset.default.fetch.size=1000
     environment:
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
@@ -282,3 +307,4 @@ volumes:
   kafka_data:
   namenode_data:
   datanode_data:
+  hf_cache:

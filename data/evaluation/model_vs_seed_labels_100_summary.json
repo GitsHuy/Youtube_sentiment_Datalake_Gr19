@@ -1,0 +1,308 @@
+{
+  "total_rows": 100,
+  "correct_rows": 59,
+  "agreement_accuracy": 0.59,
+  "seed_distribution": {
+    "neutral": 40,
+    "positive": 36,
+    "negative": 24
+  },
+  "predicted_distribution": {
+    "neutral": 52,
+    "positive": 29,
+    "negative": 19
+  },
+  "accuracy_by_review_needed": {
+    "no": {
+      "total": 38,
+      "correct": 26,
+      "accuracy": 0.6842105263157895
+    },
+    "yes": {
+      "total": 62,
+      "correct": 33,
+      "accuracy": 0.532258064516129
+    }
+  },
+  "label_metrics": {
+    "positive": {
+      "precision": 0.6896551724137931,
+      "recall": 0.5555555555555556,
+      "f1_score": 0.6153846153846154,
+      "support": 36
+    },
+    "neutral": {
+      "precision": 0.5,
+      "recall": 0.65,
+      "f1_score": 0.5652173913043479,
+      "support": 40
+    },
+    "negative": {
+      "precision": 0.6842105263157895,
+      "recall": 0.5416666666666666,
+      "f1_score": 0.6046511627906976,
+      "support": 24
+    }
+  },
+  "macro_f1": 0.5950843898265537,
+  "confusion_matrix": {
+    "positive": {
+      "positive": 20,
+      "neutral": 16,
+      "negative": 0
+    },
+    "neutral": {
+      "positive": 8,
+      "neutral": 26,
+      "negative": 6
+    },
+    "negative": {
+      "positive": 1,
+      "neutral": 10,
+      "negative": 13
+    }
+  },
+  "mismatch_count": 41,
+  "top_mismatches": [
+    {
+      "idx": "3",
+      "comment_id": "UgzoTD5YBfsX4xvnclx4AaABAg.AVBIzz2fTkSAVBJFa8T3Rf",
+      "video_id": "DXVHmGoCTco",
+      "text": "Hi",
+      "assistant_seed_label": "neutral",
+      "review_needed": "no",
+      "notes": "greeting",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.417417",
+      "is_match": "no"
+    },
+    {
+      "idx": "22",
+      "comment_id": "UgxjZAdL0pdY37pXc454AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Hi",
+      "assistant_seed_label": "neutral",
+      "review_needed": "no",
+      "notes": "greeting",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.417417",
+      "is_match": "no"
+    },
+    {
+      "idx": "92",
+      "comment_id": "UgxGPBrOAuBbvUd6NdF4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Hi",
+      "assistant_seed_label": "neutral",
+      "review_needed": "no",
+      "notes": "greeting",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.417417",
+      "is_match": "no"
+    },
+    {
+      "idx": "31",
+      "comment_id": "UgwfbmdyL7rCGj8D9qp4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Niceeeee",
+      "assistant_seed_label": "positive",
+      "review_needed": "no",
+      "notes": "praise",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.430822",
+      "is_match": "no"
+    },
+    {
+      "idx": "70",
+      "comment_id": "UgzfL_EY2RU7eVV5z1x4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "HI MRBeast",
+      "assistant_seed_label": "neutral",
+      "review_needed": "no",
+      "notes": "greeting",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.493671",
+      "is_match": "no"
+    },
+    {
+      "idx": "16",
+      "comment_id": "Ugxcp_Gpvs9PG7vy5r94AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "i wanted speed to compete",
+      "assistant_seed_label": "negative",
+      "review_needed": "no",
+      "notes": "disappointment",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.530632",
+      "is_match": "no"
+    },
+    {
+      "idx": "6",
+      "comment_id": "UgzoTD5YBfsX4xvnclx4AaABAg.AVBIzz2fTkSAVBJGOzBmZA",
+      "video_id": "DXVHmGoCTco",
+      "text": "*HI, BRO*",
+      "assistant_seed_label": "neutral",
+      "review_needed": "no",
+      "notes": "greeting",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.537492",
+      "is_match": "no"
+    },
+    {
+      "idx": "59",
+      "comment_id": "UgxvxP3C8Fjzj7_NFqV4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "4:48 the Lamborghini just vhanged from a huracan to a aventador SVJ",
+      "assistant_seed_label": "neutral",
+      "review_needed": "no",
+      "notes": "observation",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.647640",
+      "is_match": "no"
+    },
+    {
+      "idx": "36",
+      "comment_id": "UgxwcqPK9neNPuD4mkV4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Today is my birthday but 0 like \\U0001f622",
+      "assistant_seed_label": "negative",
+      "review_needed": "no",
+      "notes": "sadness",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.731699",
+      "is_match": "no"
+    },
+    {
+      "idx": "21",
+      "comment_id": "Ugy8soEtdJwNmjG5THZ4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Hi\\u2764\\u2764",
+      "assistant_seed_label": "positive",
+      "review_needed": "no",
+      "notes": "greeting with heart",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.771377",
+      "is_match": "no"
+    },
+    {
+      "idx": "58",
+      "comment_id": "UgzizOk9RtBJ5i6ovU54AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "real quick, why the captions blue? and more importantly, HOW!?",
+      "assistant_seed_label": "neutral",
+      "review_needed": "no",
+      "notes": "question",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.882996",
+      "is_match": "no"
+    },
+    {
+      "idx": "13",
+      "comment_id": "Ugzz7zcFG0dSFZGDzzx4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "why do you blindfold people for the lambo challenge, and then tell them when somebody else took off the hand...",
+      "assistant_seed_label": "neutral",
+      "review_needed": "no",
+      "notes": "question",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.967798",
+      "is_match": "no"
+    },
+    {
+      "idx": "57",
+      "comment_id": "UgxZMcKdWGMZ8BM8pQh4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Mr beast rassian and rassia chanel",
+      "assistant_seed_label": "neutral",
+      "review_needed": "yes",
+      "notes": "unclear request",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.436483",
+      "is_match": "no"
+    },
+    {
+      "idx": "83",
+      "comment_id": "UgwVS46hANkoJLWPTa94AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Mr beast please come me in your big challenge  I'm Pakistani  And please give me I phone 17 pro in my birthday  Please",
+      "assistant_seed_label": "neutral",
+      "review_needed": "yes",
+      "notes": "request",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.457541",
+      "is_match": "no"
+    },
+    {
+      "idx": "4",
+      "comment_id": "UgzoTD5YBfsX4xvnclx4AaABAg.AVBIzz2fTkSAVBJFqFaGX_",
+      "video_id": "DXVHmGoCTco",
+      "text": "W",
+      "assistant_seed_label": "positive",
+      "review_needed": "yes",
+      "notes": "slang praise",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.497758",
+      "is_match": "no"
+    },
+    {
+      "idx": "5",
+      "comment_id": "UgzoTD5YBfsX4xvnclx4AaABAg.AVBIzz2fTkSAVBJG64_yo7",
+      "video_id": "DXVHmGoCTco",
+      "text": "OMG \\U0001f631",
+      "assistant_seed_label": "positive",
+      "review_needed": "yes",
+      "notes": "excited reaction",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.518111",
+      "is_match": "no"
+    },
+    {
+      "idx": "12",
+      "comment_id": "UgxsrXWVtOXQv0mSWx54AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Justice for Rubius",
+      "assistant_seed_label": "negative",
+      "review_needed": "yes",
+      "notes": "complaint about fairness",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.520034",
+      "is_match": "no"
+    },
+    {
+      "idx": "17",
+      "comment_id": "UgxzHxjUJ_x2Pwqzk3N4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Hey mr beast I want to come your video I am from India my state is the telangana",
+      "assistant_seed_label": "positive",
+      "review_needed": "yes",
+      "notes": "fan request",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.536682",
+      "is_match": "no"
+    },
+    {
+      "idx": "62",
+      "comment_id": "UgzipbCL1WAPCNBt7p54AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Mr. Bist, if you or someone from your team reads my comment, it would be interesting and funny if you recorded a simple video somewhere in Russia or in your usual style",
+      "assistant_seed_label": "neutral",
+      "review_needed": "yes",
+      "notes": "suggestion",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.543750",
+      "is_match": "no"
+    },
+    {
+      "idx": "14",
+      "comment_id": "UgxGEP3QqFUJcaPVD5Z4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Fhigt whit Abraham :1  Win to 1000000.0000 money Abraham \\U0001f389 :998361",
+      "assistant_seed_label": "positive",
+      "review_needed": "yes",
+      "notes": "support for Abraham",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.578580",
+      "is_match": "no"
+    }
+  ]
+}
