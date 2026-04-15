@@ -1,6 +1,18 @@
 services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: nhom19-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrongPassword123!"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
   kafka:
-    image: bitnami/kafka:3.5.1
+    image: bitnamilegacy/kafka:3.5.1
     container_name: nhom19-kafka
     environment:
       KAFKA_CFG_NODE_ID: 1
@@ -69,7 +81,7 @@ services:
           echo 'Waiting for HDFS...'
           sleep 2
         done
-        hdfs dfs -fs hdfs://namenode:8020 -mkdir -p /lake/bronze /lake/bronze/youtube_comments /lake/silver /lake/silver/youtube_comments /lake/gold /lake/gold/youtube_comment_metrics /lake/gold/youtube_sentiment_breakdown /checkpoints /user/hive/warehouse
+        hdfs dfs -fs hdfs://namenode:8020 -mkdir -p /lake/bronze /lake/bronze/youtube_comments /lake/silver /lake/silver/youtube_comments /lake/gold /lake/gold/youtube_comment_metrics /checkpoints /user/hive/warehouse
         hdfs dfs -fs hdfs://namenode:8020 -chmod -R 777 /lake /checkpoints
         hdfs dfs -fs hdfs://namenode:8020 -chmod -R 777 /user/hive
         echo 'HDFS init done.'
@@ -77,15 +89,16 @@ services:
 
   hive-metastore:
     build:
-      context: ./hive
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: hive/Dockerfile
     container_name: nhom19-hive-metastore
     depends_on:
       - namenode
       - datanode
       - hdfs-init
+      - sqlserver
     environment:
-      SQLSERVER_HOST: ${SQLSERVER_HOST:-host.docker.internal}
+      SQLSERVER_HOST: sqlserver
       SQLSERVER_PORT: ${SQLSERVER_PORT:-1433}
       SQLSERVER_DATABASE: ${SQLSERVER_DATABASE:-hive_metastore}
       SQLSERVER_USERNAME: ${SQLSERVER_USERNAME:-sa}
@@ -95,11 +108,11 @@ services:
       HADOOP_CONF_DIR: /opt/hadoop-conf
     ports:
       - "9083:9083"
-    volumes:
-      - ./hadoop/conf:/opt/hadoop-conf:ro
 
   producer:
-    image: python:3.11-slim
+    build:
+      context: .
+      dockerfile: producer/Dockerfile
     container_name: nhom19-producer
     depends_on:
       - kafka
@@ -112,13 +125,8 @@ services:
         python producer.py
     environment:
       INGESTION_MODE: ${INGESTION_MODE:-sample}
-      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}
-      YOUTUBE_VIDEO_ID: ${YOUTUBE_VIDEO_ID:-}
-      YOUTUBE_ORDER: ${YOUTUBE_ORDER:-time}
-      YOUTUBE_MAX_RESULTS: ${YOUTUBE_MAX_RESULTS:-100}
-      YOUTUBE_PAGE_LIMIT: ${YOUTUBE_PAGE_LIMIT:-5}
-      YOUTUBE_RETRY_DELAY_SECONDS: ${YOUTUBE_RETRY_DELAY_SECONDS:-5}
-      YOUTUBE_PUBLISH_DELAY_MS: ${YOUTUBE_PUBLISH_DELAY_MS:-0}
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY}
+      YOUTUBE_VIDEO_ID: ${YOUTUBE_VIDEO_ID}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: youtube-comments
       SAMPLE_DATA_PATH: /data/sample_comments.jsonl
@@ -126,14 +134,11 @@ services:
       SAMPLE_LOOP: ${SAMPLE_LOOP:-false}
       KAFKA_RETRY_DELAY_SECONDS: "5"
     restart: "no"
-    volumes:
-      - ./producer:/app
-      - ./data:/data:ro
 
   spark-master:
     build:
-      context: ./spark
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: spark/Dockerfile
     container_name: nhom19-spark-master
     user: "0:0"
     depends_on:
@@ -155,15 +160,11 @@ services:
     ports:
       - "8081:8080"
       - "7077:7077"
-    volumes:
-      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
-      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
-      - ./spark/sql:/opt/sql:ro
 
   spark-worker:
     build:
-      context: ./spark
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: spark/Dockerfile
     container_name: nhom19-spark-worker
     user: "0:0"
     depends_on:
@@ -179,14 +180,12 @@ services:
       PYSPARK_PYTHON: /usr/bin/python3
     ports:
       - "8082:8081"
-    volumes:
-      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
-      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+
 
   spark-bronze:
     build:
-      context: ./spark
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: spark/Dockerfile
     container_name: nhom19-spark-bronze
     user: "0:0"
     depends_on:
@@ -199,16 +198,13 @@ services:
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
       SPARK_LOCAL_DIRS: /tmp/spark-local
       PYSPARK_PYTHON: /usr/bin/python3
-    volumes:
-      - ./spark/jobs:/opt/jobs:ro
-      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
-      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+
     restart: on-failure
 
   spark-silver:
     build:
-      context: ./spark
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: spark/Dockerfile
     container_name: nhom19-spark-silver
     user: "0:0"
     depends_on:
@@ -222,22 +218,13 @@ services:
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
       SPARK_LOCAL_DIRS: /tmp/spark-local
       PYSPARK_PYTHON: /usr/bin/python3
-      SENTIMENT_MODE: ${SENTIMENT_MODE:-transformer}
-      SENTIMENT_MODEL_NAME: ${SENTIMENT_MODEL_NAME:-cardiffnlp/twitter-xlm-roberta-base-sentiment-multilingual}
-      SENTIMENT_BATCH_SIZE: ${SENTIMENT_BATCH_SIZE:-8}
-      SENTIMENT_MAX_LENGTH: ${SENTIMENT_MAX_LENGTH:-256}
-      SENTIMENT_FALLBACK_TO_KEYWORD: ${SENTIMENT_FALLBACK_TO_KEYWORD:-true}
-    volumes:
-      - ./spark/jobs:/opt/jobs:ro
-      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
-      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
-      - hf_cache:/root/.cache/huggingface
+
     restart: on-failure
 
   spark-gold:
     build:
-      context: ./spark
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: spark/Dockerfile
     container_name: nhom19-spark-gold
     user: "0:0"
     depends_on:
@@ -251,16 +238,13 @@ services:
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
       SPARK_LOCAL_DIRS: /tmp/spark-local
       PYSPARK_PYTHON: /usr/bin/python3
-    volumes:
-      - ./spark/jobs:/opt/jobs:ro
-      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
-      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+
     restart: on-failure
 
   spark-thriftserver:
     build:
-      context: ./spark
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: spark/Dockerfile
     container_name: nhom19-spark-thriftserver
     user: "0:0"
     depends_on:
@@ -271,26 +255,14 @@ services:
       - /bin/bash
       - -lc
       - |
-        until bash -c '</dev/tcp/hive-metastore/9083' >/dev/null 2>&1; do
-          echo 'Waiting for hive-metastore:9083...'
-          sleep 3
-        done
-        until bash -c '</dev/tcp/spark-master/7077' >/dev/null 2>&1; do
-          echo 'Waiting for spark-master:7077...'
-          sleep 3
-        done
         export SPARK_NO_DAEMONIZE=true
         /opt/spark/sbin/start-thriftserver.sh \
           --master spark://spark-master:7077 \
           --conf spark.sql.catalogImplementation=hive \
           --conf spark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083 \
           --conf spark.sql.warehouse.dir=hdfs://namenode:8020/user/hive/warehouse \
-          --conf spark.sql.hive.thriftServer.incrementalCollect=true \
           --hiveconf hive.server2.thrift.port=10000 \
           --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
-          --hiveconf hive.server2.authentication=NONE \
-          --hiveconf hive.server2.enable.doAs=false \
-          --hiveconf hive.server2.transport.mode=binary \
           --hiveconf hive.server2.thrift.resultset.default.fetch.size=1000
     environment:
       HADOOP_CONF_DIR: /opt/spark/conf/hadoop
@@ -299,12 +271,10 @@ services:
     ports:
       - "10000:10000"
       - "4040:4040"
-    volumes:
-      - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
-      - ./hadoop/conf:/opt/spark/conf/hadoop:ro
+
 
 volumes:
   kafka_data:
   namenode_data:
   datanode_data:
-  hf_cache:
+  sqlserver_data:
