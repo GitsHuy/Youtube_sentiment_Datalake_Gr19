@@ -1,104 +1,28 @@
-# Project Nhóm 19 Datalakehouse
+# Cập nhật Hệ thống Real-Time Sentiment Datalakehouse (Youtube Comments)
 
-Đây là bộ khung dùng chung cho đồ án phân tích cảm xúc bình luận YouTube theo hướng lakehouse.
+Tài liệu này tổng hợp toàn bộ các thay đổi cốt lõi đã được đội ngũ tinh chỉnh để hệ thống chạy trơn tru, lấy dữ liệu thời gian thực từ Youtube API thay vì dữ liệu tĩnh, đồng thời xử lý triệt để lỗi sập RAM cục bộ và mất kết nối Hive Metastore trên môi trường Laptop.
 
-## Mục tiêu dự án
+## 🛠️ Danh sách các tệp (Files) đã được nâng cấp Cốt Lõi:
 
-Hệ thống hướng tới luồng xử lý sau:
+### 1. `docker-compose.yml`
+- **Thêm dịch vụ `sqlserver`**: Đây là trái tim lưu trữ siêu dữ liệu (Metadata) cho `hive-metastore`. Cấu hình thành công SQL Server giúp Hive ghi nhận và cấp phát danh mục Bảng dữ liệu một cách bảo mật.
+- **Vá lỗi môi trường `producer`**: Đã cắm thành công biến môi trường `YOUTUBE_API_KEY` và `YOUTUBE_VIDEO_ID` trực tiếp vào luồng rễ Docker của `producer`, giúp nó có quyền lực ngỏ lời nạp dữ liệu từ kho Google Youtube.
 
-- lấy bình luận từ đúng 1 video YouTube thông qua `videoId`
-- đưa dữ liệu vào Kafka
-- xử lý qua 3 lớp Bronze, Silver, Gold trên HDFS
-- quản lý metadata bằng Hive Metastore
-- mở dữ liệu cho truy vấn SQL, JDBC và Power BI qua Spark Thrift Server
+### 2. `spark/Dockerfile`
+- **Nâng cấp Image nền tảng**: Đổi sang sử dụng base `apache/spark-py:v3.3.0` để hệ thống tự động tích hợp sẵn nhân PySpark. Đã lược bỏ các biến dư thừa không cần thiết để Docker nhẹ gọn hơn khi Build khởi động.
 
-## Thành phần hiện đã có
+### 3. `producer/producer.py` & `requirements.txt`
+- **Chuyển đổi Ingestion Mode**: Đã nâng cấp chế độ từ chọc dữ liệu mẫu tĩnh (`sample`) sang thực chiến hút dữ liệu thật bằng API (`youtube_api`).
+- **Thêm vòng lặp hút rễ nhánh**: Bổ sung thuật toán vào chuỗi `build_reply_record`, cho phép kéo không chỉ bình luận gốc mà còn duyệt bộ đệ quy kéo thêm cả luồng trả lời bên dưới (Thread replies), giúp thu hoạch hàng ngàn comment một cách triệt để không sót 1 ai.
 
-Hệ thống hiện tại đã có sẵn:
+### 4. `spark/jobs/bronze_stream.py`
+- **Chỉnh tiêu cự Kafka**: Chuyển tín hiệu đầu vào `startingOffsets` từ `latest` (bỏ rơi quá khứ) sang `earliest` (vét cạn rương). Đảm bảo Spark Consumer đọc trọn vẹn dòng chảy lịch sử ngay cả sau khi máy sập.
 
-- Kafka và Kafka UI
-- HDFS gồm NameNode, DataNode và bước khởi tạo thư mục
-- producer mẫu để bơm dữ liệu fallback
-- Spark master, worker và 3 job Bronze, Silver, Gold
-- Hive Metastore dùng SQL Server local
-- Spark Thrift Server để nối JDBC và Power BI
+### 5. `spark/jobs/silver_stream.py`
+- **Tối ưu hóa Màng lọc AI (PhoBERT Tiếng Việt)**: Lắp ghép hoàn chỉnh mô hình Học Sâu `wonrax/phobert-base-vietnamese-sentiment` chạy kẹp trong hệ thống nhúng Pandas UDF thần thánh. Đây là bước đột phá kiến trúc giúp chia nhỏ gánh nặng, để CPU Laptop không bị nghẽn cổ chai khi nuốt cả ngàn bình luận cùng lúc.
 
-## Quyết định hiện tại của nhóm
+### 6. `spark/jobs/gold_stream.py` & `register_tables.sql`
+- **Sản xuất Báo cáo Vàng (Gold Bar)**: Hoàn thiện logic tổng hợp cảm xúc trích xuất kết quả thành 2 siêu chỉ báo phục vụ Dashboard: Bảng Metrics Tổng (`gold_youtube_comment_metrics`) và Bảng tỷ trọng Cảm xúc (`gold_youtube_sentiment_breakdown`).
+- **Đăng kí Sổ Đỏ thành công**: Vá lỗi kết nối DDL DBeaver, cắm hoàn mỹ các bảng trên vào Hive Metastore để Thriftserver phát sóng chảo HTTP đi muôn phương.
 
-- giữ SQL Server local
-- chưa đưa Delta Lake vào ngay
-- giữ bộ dữ liệu mẫu để mỗi thành viên có thể tự test độc lập
-- phát triển tiếp trên bộ khung này, không làm lại hạ tầng từ đầu
 
-## Đọc tài liệu theo thứ tự
-
-- `docs/handover-guide.md`: file định hướng đọc nhanh toàn bộ repo
-- `docs/run-system.md`: cách chạy hệ thống và kiểm tra từng phần
-- `docs/interfaces.md`: hợp đồng schema, topic, path và bảng dùng chung
-- `docs/query-guide.md`: bộ truy vấn kiểm tra toàn hệ thống
-- `docs/demo-playbook.md`: kịch bản demo 1 mạch
-
-## Nguyên tắc chung
-
-- những tên dùng chung như Kafka topic, HDFS path, database, tên bảng cốt lõi không được đổi nếu chủ chưa đồng ý
-
-## Cấu trúc repository
-
-- `data/`: dữ liệu mẫu để test local
-- `producer/`: phần ingestion hiện tại
-- `spark/`: Spark jobs, SQL đăng ký bảng và cấu hình runtime
-- `hadoop/`: cấu hình HDFS client được mount vào Spark và Hive
-- `hive/`: image Hive Metastore, template config và script khởi động
-- `sqlserver/`: ghi chú liên quan đến SQL Server local
-- `scripts/`: script hỗ trợ reset và tải JDBC driver
-- `docs/`: tài liệu vận hành và phối hợp cho nhóm
-
-## Phạm vi baseline hiện tại
-
-Code hiện tại vẫn là baseline để phát triển tiếp:
-
-- ingestion mặc định đọc `data/sample_comments.jsonl`
-- producer mẫu mặc định chỉ gửi 1 lượt để tránh nhân bản số liệu demo
-- Bronze, Silver, Gold đang ghi ra `PARQUET`
-- Silver đang dùng baseline sentiment theo từ khóa
-- Silver đã có khâu khử trùng lặp theo `comment_id`
-- Spark Thrift Server đã có sẵn cho lớp truy vấn SQL
-
-## Cách chạy nhanh
-
-Chạy lần lượt tại thư mục gốc repo:
-
-```powershell
-docker compose up -d kafka kafka-ui namenode datanode hdfs-init hive-metastore spark-master spark-worker
-docker compose up -d producer spark-bronze spark-silver spark-gold
-docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -f /opt/sql/register_tables.sql"
-docker compose up -d spark-thriftserver
-```
-
-## Cách xem dữ liệu
-
-Xem nhanh dữ liệu Bronze:
-
-```powershell
-docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT * FROM lakehouse.bronze_youtube_comments LIMIT 10'"
-```
-
-Xem nhanh dữ liệu Silver:
-
-```powershell
-docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT comment_id, text_clean, sentiment FROM lakehouse.silver_youtube_comments LIMIT 10'"
-```
-
-Xem nhanh dữ liệu Gold:
-
-```powershell
-docker compose exec spark-master /bin/bash -lc "/opt/spark/bin/spark-sql -e 'SELECT * FROM lakehouse.gold_youtube_comment_metrics LIMIT 10'"
-```
-
-## Ghi chú quan trọng
-
-- SQL Server local hiện chỉ đóng vai trò Hive Metastore, không phải nơi lưu dữ liệu thật của Bronze, Silver, Gold
-- dữ liệu thật đang nằm trên HDFS
-- nếu muốn xem dữ liệu thì ưu tiên dùng `spark-sql`, Spark Thrift Server, DBeaver hoặc Power BI
-
-Bộ khung này được giữ có chủ đích để A, B, C có thể làm song song trên một nền ổn định, thay vì chờ nhau theo kiểu tuần tự.
