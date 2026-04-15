@@ -1,0 +1,360 @@
+{
+  "total_rows": 100,
+  "correct_rows": 89,
+  "agreement_accuracy": 0.89,
+  "actual_distribution": {
+    "neutral": 33,
+    "positive": 42,
+    "negative": 25
+  },
+  "predicted_distribution": {
+    "neutral": 27,
+    "positive": 45,
+    "negative": 28
+  },
+  "accuracy_by_review_bucket": {
+    "question": {
+      "total": 9,
+      "correct": 6,
+      "accuracy": 0.6666666666666666
+    },
+    "clear praise": {
+      "total": 7,
+      "correct": 7,
+      "accuracy": 1.0
+    },
+    "greeting": {
+      "total": 5,
+      "correct": 5,
+      "accuracy": 1.0
+    },
+    "gen z praise": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "excited reaction": {
+      "total": 3,
+      "correct": 3,
+      "accuracy": 1.0
+    },
+    "request with sadness": {
+      "total": 4,
+      "correct": 3,
+      "accuracy": 0.75
+    },
+    "supportive": {
+      "total": 15,
+      "correct": 15,
+      "accuracy": 1.0
+    },
+    "criticism": {
+      "total": 7,
+      "correct": 7,
+      "accuracy": 1.0
+    },
+    "name only": {
+      "total": 3,
+      "correct": 3,
+      "accuracy": 1.0
+    },
+    "complaint": {
+      "total": 4,
+      "correct": 4,
+      "accuracy": 1.0
+    },
+    "question with sadness": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "disappointment": {
+      "total": 1,
+      "correct": 0,
+      "accuracy": 0.0
+    },
+    "request": {
+      "total": 7,
+      "correct": 5,
+      "accuracy": 0.7142857142857143
+    },
+    "unclear foreign language": {
+      "total": 7,
+      "correct": 6,
+      "accuracy": 0.8571428571428571
+    },
+    "aggressive tone": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "greeting with heart": {
+      "total": 2,
+      "correct": 2,
+      "accuracy": 1.0
+    },
+    "love statement": {
+      "total": 2,
+      "correct": 2,
+      "accuracy": 1.0
+    },
+    "community praise": {
+      "total": 2,
+      "correct": 2,
+      "accuracy": 1.0
+    },
+    "possible sarcasm": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "short request": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "sadness": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "mocking": {
+      "total": 2,
+      "correct": 1,
+      "accuracy": 0.5
+    },
+    "clear dislike": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "question with black heart": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "availability issue": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "unclear request": {
+      "total": 1,
+      "correct": 0,
+      "accuracy": 0.0
+    },
+    "observation": {
+      "total": 1,
+      "correct": 0,
+      "accuracy": 0.0
+    },
+    "timing comment": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "suggestion": {
+      "total": 2,
+      "correct": 2,
+      "accuracy": 1.0
+    },
+    "emoji only": {
+      "total": 2,
+      "correct": 2,
+      "accuracy": 1.0
+    },
+    "promotion spam": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    },
+    "unclear short text": {
+      "total": 2,
+      "correct": 2,
+      "accuracy": 1.0
+    },
+    "sad reaction": {
+      "total": 1,
+      "correct": 1,
+      "accuracy": 1.0
+    }
+  },
+  "label_metrics": {
+    "positive": {
+      "precision": 0.9333333333333333,
+      "recall": 1.0,
+      "f1_score": 0.9655172413793104,
+      "support": 42
+    },
+    "neutral": {
+      "precision": 0.9259259259259259,
+      "recall": 0.7575757575757576,
+      "f1_score": 0.8333333333333334,
+      "support": 33
+    },
+    "negative": {
+      "precision": 0.7857142857142857,
+      "recall": 0.88,
+      "f1_score": 0.830188679245283,
+      "support": 25
+    }
+  },
+  "macro_f1": 0.8763464179859756,
+  "confusion_matrix": {
+    "positive": {
+      "positive": 42,
+      "neutral": 0,
+      "negative": 0
+    },
+    "neutral": {
+      "positive": 2,
+      "neutral": 25,
+      "negative": 6
+    },
+    "negative": {
+      "positive": 1,
+      "neutral": 2,
+      "negative": 22
+    }
+  },
+  "mismatch_count": 11,
+  "top_mismatches": [
+    {
+      "idx": "57",
+      "comment_id": "UgxZMcKdWGMZ8BM8pQh4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Mr beast rassian and rassia chanel",
+      "actual_label": "neutral",
+      "review_bucket": "unclear request",
+      "notes": "unclear request",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.436483",
+      "is_match": "no"
+    },
+    {
+      "idx": "83",
+      "comment_id": "UgwVS46hANkoJLWPTa94AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Mr beast please come me in your big challenge  I'm Pakistani  And please give me I phone 17 pro in my birthday  Please",
+      "actual_label": "neutral",
+      "review_bucket": "request",
+      "notes": "request",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.457541",
+      "is_match": "no"
+    },
+    {
+      "idx": "16",
+      "comment_id": "Ugxcp_Gpvs9PG7vy5r94AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "i wanted speed to compete",
+      "actual_label": "negative",
+      "review_bucket": "disappointment",
+      "notes": "disappointment",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.530632",
+      "is_match": "no"
+    },
+    {
+      "idx": "37",
+      "comment_id": "UgwiaYPJ6qZ-mL146R54AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "MR beast  can you give me a gaming  PC please please please please please please please please please please please please please please please please please please please please please please\\U0001f62d\\U0001f62d please please please p\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64f\\U0001f64fplease please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please\\U0001f97a\\U0001f97a\\U0001f97a\\U0001f97a\\U0001f97a\\U0001f97a\\U0001f97a\\U0001f97a\\U0001f97a\\U0001f97aplease please please please please please please please please please please please  Please please please please please please please please please please please please please please please please please please please please please pleased please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please pleaseplease",
+      "actual_label": "negative",
+      "review_bucket": "request with sadness",
+      "notes": "request with sadness",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.629855",
+      "is_match": "no"
+    },
+    {
+      "idx": "59",
+      "comment_id": "UgxvxP3C8Fjzj7_NFqV4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "4:48 the Lamborghini just vhanged from a huracan to a aventador SVJ",
+      "actual_label": "neutral",
+      "review_bucket": "observation",
+      "notes": "observation",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.647640",
+      "is_match": "no"
+    },
+    {
+      "idx": "51",
+      "comment_id": "Ugy0HeZ5H6-wfsXkg7N4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "You will gave the gift really",
+      "actual_label": "neutral",
+      "review_bucket": "question",
+      "notes": "question",
+      "predicted_label": "positive",
+      "predicted_confidence": "0.659693",
+      "is_match": "no"
+    },
+    {
+      "idx": "69",
+      "comment_id": "Ugxfg_O7nCVKo74DS_V4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "Kenal aja kagak\\U0001f639",
+      "actual_label": "negative",
+      "review_bucket": "mocking",
+      "notes": "mocking",
+      "predicted_label": "neutral",
+      "predicted_confidence": "0.676327",
+      "is_match": "no"
+    },
+    {
+      "idx": "53",
+      "comment_id": "UgyO5XuQaxHFDy0tJzR4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "ROBLOX 100.000 pls G\\u0130VE? \\U0001f97a",
+      "actual_label": "neutral",
+      "review_bucket": "request",
+      "notes": "request",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.693494",
+      "is_match": "no"
+    },
+    {
+      "idx": "23",
+      "comment_id": "UgzNS0ENspkixbj8YPt4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "\\u0410 \\u043a\\u0443\\u0434\\u0430 \\u043f\\u0440\\u043e\\u043f\\u0430\\u043b \\u0421\\u041f\\u0418\\u0414 \\u043f\\u043e\\u0441\\u043b\\u0435 \\u0444\\u0443\\u0442\\u0431\\u043e\\u043b\\u0430",
+      "actual_label": "neutral",
+      "review_bucket": "unclear foreign language",
+      "notes": "unclear foreign language",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.868626",
+      "is_match": "no"
+    },
+    {
+      "idx": "58",
+      "comment_id": "UgzizOk9RtBJ5i6ovU54AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "real quick, why the captions blue? and more importantly, HOW!?",
+      "actual_label": "neutral",
+      "review_bucket": "question",
+      "notes": "question",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.882996",
+      "is_match": "no"
+    },
+    {
+      "idx": "89",
+      "comment_id": "UgzB3ieSW90kNr56lKx4AaABAg",
+      "video_id": "DXVHmGoCTco",
+      "text": "21:02 why is mister beast crawling like that \\U0001f62d",
+      "actual_label": "neutral",
+      "review_bucket": "question",
+      "notes": "question",
+      "predicted_label": "negative",
+      "predicted_confidence": "0.983539",
+      "is_match": "no"
+    }
+  ],
+  "evaluation_mode": "transformer",
+  "input_file": "data/evaluation/manual_labels_100.csv",
+  "label_column": "manual_label",
+  "slang_lexicon": "spark/jobs/slang_sentiment_lexicon.json",
+  "model_name": "cardiffnlp/twitter-xlm-roberta-base-sentiment-multilingual"
+}

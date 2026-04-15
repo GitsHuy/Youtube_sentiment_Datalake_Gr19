@@ -2,19 +2,20 @@
 
 Tài liệu này dùng để note lại các đề xuất cải thiện hệ thống sau các checkpoint đã hoàn thành. Đây không phải log thực thi, mà là danh sách định hướng để tránh quên các việc cần làm tiếp.
 
-## 1. Bước tiếp theo đã chốt
+## 1. Hướng ưu tiên hiện tại
 
-Sau checkpoint 4, thứ tự làm tiếp đã được chốt như sau:
+Với quyết định hiện tại là giữ nguyên `1 video_id` ổn định để phát triển tiếp, thứ tự ưu tiên gần nên là:
 
-1. Làm một nhịp reset dữ liệu có kiểm soát để cô lập hoàn toàn bài test `1 video YouTube`.
-2. Xác nhận lại luồng dữ liệu sạch theo đúng một `video_id`.
-3. Sau đó mới sang checkpoint 5 để nâng sentiment từ rule-based lên mô hình tốt hơn.
+1. Nâng ingestion từ kiểu theo đợt sang polling liên tục ổn định hơn.
+2. Đánh giá lại sentiment model bằng bộ nhãn tay `100-200` comment thật.
+3. Mở rộng Gold và dashboard để tăng giá trị trình bày.
+4. Chuẩn hóa smoke test, quality check và metadata/query.
+5. Chỉ sau khi pipeline đã ổn định mới nâng kiến trúc sang `Delta Lake`.
 
-Lý do phải làm bước này trước checkpoint 5:
+Ghi chú:
 
-- `Bronze` hiện còn giữ dữ liệu lịch sử từ các lần demo trước.
-- `Silver` hiện đã sạch hơn về chất lượng xử lý, nhưng vẫn còn lẫn một số `video_id` cũ do đọc lại toàn bộ `Bronze`.
-- Nếu chưa cô lập dữ liệu test, khi nâng model ở checkpoint 5 thì kết quả đánh giá sẽ bị nhiễu.
+- Script reset dữ liệu test `1 video` vẫn có giá trị, nhưng hiện không còn là ưu tiên số 1.
+- Reset nên được xem là công cụ hỗ trợ kỹ thuật dùng khi cần, không phải bước bắt buộc cho mọi lần chạy.
 
 ## 2. Đề xuất reset dữ liệu có kiểm soát
 
@@ -43,6 +44,20 @@ Kết quả mong muốn sau reset:
 - `Bronze` chỉ còn dữ liệu mới của đúng `YOUTUBE_VIDEO_ID` đang test
 - `Silver` chỉ sinh dữ liệu từ đúng video đó
 - `Gold` chỉ tổng hợp trên đúng dữ liệu mới
+
+Khi nào nên làm reset:
+
+- khi đổi `YOUTUBE_VIDEO_ID`
+- khi đổi schema ở `Bronze`, `Silver` hoặc `Gold`
+- khi đổi logic streaming khiến checkpoint cũ không còn an toàn
+- khi cần benchmark sạch cho báo cáo hoặc demo chính thức
+- khi nghi ngờ dữ liệu cũ đang làm nhiễu kết quả
+
+Khi nào chưa cần reset:
+
+- khi vẫn giữ nguyên `video_id`
+- khi chỉ sửa tài liệu, truy vấn, dashboard hoặc kiểm tra hệ thống còn chạy
+- khi đang phát triển tăng dần trên cùng một luồng dữ liệu ổn định
 
 ## 3. Đề xuất cải thiện Producer
 
@@ -159,22 +174,20 @@ Sau checkpoint 5 có thể bổ sung:
 - số lượng reply theo ngày
 - xu hướng cảm xúc theo thời gian
 
-## 6. Đề xuất cho Checkpoint 5
+## 6. Ưu tiên tiếp theo theo góc nhìn hiện tại
 
-Checkpoint 5 không nên bắt đầu ngay khi dữ liệu nền còn lẫn nhiều `video_id`.
+Các hướng đang đáng làm tiếp nhất:
 
-Điều kiện nên có trước khi vào checkpoint 5:
+1. `Ingestion`: cho `producer.py` chạy polling liên tục và giảm trùng comment.
+2. `Sentiment model`: tạo bộ nhãn tay tốt hơn và benchmark lại với `SENTIMENT_FALLBACK_TO_KEYWORD=false`.
+3. `Gold + dashboard`: mở rộng thêm metric business để phục vụ trình bày.
+4. `Vận hành`: tăng độ tin cậy bằng smoke test, quality check, refresh metadata khi cần.
+5. `Kiến trúc`: chỉ chuyển sang `Delta Lake` sau khi các phần trên đủ ổn định.
 
-- đã reset dữ liệu có kiểm soát
-- đã ingest lại sạch từ đúng một `video_id`
-- đã xác nhận `Bronze`, `Silver`, `Gold` chỉ còn dữ liệu phục vụ đúng bài test hiện tại
+Các hướng hiện chưa cần ưu tiên ngay:
 
-Hướng nâng sentiment ở checkpoint 5:
-
-- giữ baseline rule-based làm mốc so sánh
-- thử mô hình pretrained trước
-- nếu cần thì mới nghĩ đến huấn luyện thêm
-- phải có ít nhất một tập mẫu để đánh giá kết quả mô hình
+- script reset dữ liệu test cho `1 video` nếu hệ thống vẫn giữ nguyên `video_id`
+- huấn luyện mô hình riêng từ đầu khi chưa đánh giá đủ tốt mô hình pretrained hiện tại
 
 ## 7. Đề xuất dài hạn
 

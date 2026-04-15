@@ -39,8 +39,8 @@ def main() -> None:
 
     kafka_bootstrap = "kafka:9092"
     topic = "youtube-comments"
-    bronze_path = "hdfs://namenode:8020/lake/bronze/youtube_comments"
-    checkpoint_path = "hdfs://namenode:8020/checkpoints/bronze_youtube_comments"
+    bronze_path = "hdfs://namenode:8020/lake_delta/bronze/youtube_comments"
+    checkpoint_path = "hdfs://namenode:8020/checkpoints_delta/bronze_youtube_comments"
 
     raw_stream = (
         spark.readStream.format("kafka")
@@ -65,7 +65,7 @@ def main() -> None:
     )
 
     (
-        bronze_df.writeStream.format("parquet")
+        bronze_df.writeStream.format("delta")
         .outputMode("append")
         .option("checkpointLocation", checkpoint_path)
         .start(bronze_path)

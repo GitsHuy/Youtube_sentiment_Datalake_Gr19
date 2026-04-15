@@ -69,8 +69,8 @@ services:
           echo 'Waiting for HDFS...'
           sleep 2
         done
-        hdfs dfs -fs hdfs://namenode:8020 -mkdir -p /lake/bronze /lake/bronze/youtube_comments /lake/silver /lake/silver/youtube_comments /lake/gold /lake/gold/youtube_comment_metrics /lake/gold/youtube_sentiment_breakdown /checkpoints /user/hive/warehouse
-        hdfs dfs -fs hdfs://namenode:8020 -chmod -R 777 /lake /checkpoints
+        hdfs dfs -fs hdfs://namenode:8020 -mkdir -p /lake/bronze /lake/bronze/youtube_comments /lake/silver /lake/silver/youtube_comments /lake/gold /lake/gold/youtube_comment_metrics /lake/gold/youtube_sentiment_breakdown /lake_delta/bronze /lake_delta/bronze/youtube_comments /lake_delta/silver /lake_delta/silver/youtube_comments /lake_delta/gold /lake_delta/gold/youtube_comment_metrics /lake_delta/gold/youtube_sentiment_breakdown /checkpoints /checkpoints_delta /user/hive/warehouse
+        hdfs dfs -fs hdfs://namenode:8020 -chmod -R 777 /lake /lake_delta /checkpoints /checkpoints_delta
         hdfs dfs -fs hdfs://namenode:8020 -chmod -R 777 /user/hive
         echo 'HDFS init done.'
     restart: "no"
@@ -97,6 +97,16 @@ services:
       - "9083:9083"
     volumes:
       - ./hadoop/conf:/opt/hadoop-conf:ro
+      - ./hive/conf/hive-site.xml.template:/opt/hive/conf/hive-site.xml.template:ro
+      - ./hive/scripts/start-metastore.sh:/opt/hive/scripts/start-metastore.sh:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - bash -lc "(echo > /dev/tcp/127.0.0.1/9083) >/dev/null 2>&1"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   producer:
     image: python:3.11-slim
@@ -119,6 +129,9 @@ services:
       YOUTUBE_PAGE_LIMIT: ${YOUTUBE_PAGE_LIMIT:-5}
       YOUTUBE_RETRY_DELAY_SECONDS: ${YOUTUBE_RETRY_DELAY_SECONDS:-5}
       YOUTUBE_PUBLISH_DELAY_MS: ${YOUTUBE_PUBLISH_DELAY_MS:-0}
+      YOUTUBE_CONTINUOUS_MODE: ${YOUTUBE_CONTINUOUS_MODE:-false}
+      YOUTUBE_POLL_INTERVAL_SECONDS: ${YOUTUBE_POLL_INTERVAL_SECONDS:-60}
+      YOUTUBE_DEDUP_CACHE_SIZE: ${YOUTUBE_DEDUP_CACHE_SIZE:-5000}
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       KAFKA_TOPIC: youtube-comments
       SAMPLE_DATA_PATH: /data/sample_comments.jsonl
@@ -154,9 +167,10 @@ services:
       SPARK_LOCAL_DIRS: /tmp/spark-local
     ports:
       - "8081:8080"
-      - "7077:7077"
+      - "17077:7077"
     volumes:
       - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./spark/conf/hive-site.xml:/opt/spark/conf/hive-site.xml:ro
       - ./hadoop/conf:/opt/spark/conf/hadoop:ro
       - ./spark/sql:/opt/sql:ro
 
@@ -181,6 +195,7 @@ services:
       - "8082:8081"
     volumes:
       - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./spark/conf/hive-site.xml:/opt/spark/conf/hive-site.xml:ro
       - ./hadoop/conf:/opt/spark/conf/hadoop:ro
 
   spark-bronze:
@@ -202,6 +217,7 @@ services:
     volumes:
       - ./spark/jobs:/opt/jobs:ro
       - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./spark/conf/hive-site.xml:/opt/spark/conf/hive-site.xml:ro
       - ./hadoop/conf:/opt/spark/conf/hadoop:ro
     restart: on-failure
 
@@ -230,6 +246,7 @@ services:
     volumes:
       - ./spark/jobs:/opt/jobs:ro
       - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./spark/conf/hive-site.xml:/opt/spark/conf/hive-site.xml:ro
       - ./hadoop/conf:/opt/spark/conf/hadoop:ro
       - hf_cache:/root/.cache/huggingface
     restart: on-failure
@@ -254,6 +271,7 @@ services:
     volumes:
       - ./spark/jobs:/opt/jobs:ro
       - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./spark/conf/hive-site.xml:/opt/spark/conf/hive-site.xml:ro
       - ./hadoop/conf:/opt/spark/conf/hadoop:ro
     restart: on-failure
 
@@ -282,13 +300,18 @@ services:
         export SPARK_NO_DAEMONIZE=true
         /opt/spark/sbin/start-thriftserver.sh \
           --master spark://spark-master:7077 \
+          --packages io.delta:delta-core_2.12:2.3.0 \
+          --conf spark.jars.packages=io.delta:delta-core_2.12:2.3.0 \
           --conf spark.sql.catalogImplementation=hive \
-          --conf spark.hadoop.hive.metastore.uris=thrift://hive-metastore:9083 \
+          --conf spark.hadoop.hive.metastore.uris=thrift://host.docker.internal:9083 \
           --conf spark.sql.warehouse.dir=hdfs://namenode:8020/user/hive/warehouse \
+          --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension \
+          --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog \
           --conf spark.sql.hive.thriftServer.incrementalCollect=true \
+          --hiveconf hive.metastore.uris=thrift://host.docker.internal:9083 \
           --hiveconf hive.server2.thrift.port=10000 \
           --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
-          --hiveconf hive.server2.authentication=NONE \
+          --hiveconf hive.server2.authentication=NOSASL \
           --hiveconf hive.server2.enable.doAs=false \
           --hiveconf hive.server2.transport.mode=binary \
           --hiveconf hive.server2.thrift.resultset.default.fetch.size=1000
@@ -301,6 +324,7 @@ services:
       - "4040:4040"
     volumes:
       - ./spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
+      - ./spark/conf/hive-site.xml:/opt/spark/conf/hive-site.xml:ro
       - ./hadoop/conf:/opt/spark/conf/hadoop:ro
 
 volumes:

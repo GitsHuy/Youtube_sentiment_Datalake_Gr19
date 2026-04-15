@@ -12,6 +12,8 @@ RUN apt-get update \
     && curl -fsSL -o /opt/spark/jars/kafka-clients-2.8.1.jar https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/2.8.1/kafka-clients-2.8.1.jar \
     && curl -fsSL -o /opt/spark/jars/commons-pool2-2.11.1.jar https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/2.11.1/commons-pool2-2.11.1.jar \
     && curl -fsSL -o /opt/spark/jars/jsr305-3.0.0.jar https://repo1.maven.org/maven2/com/google/code/findbugs/jsr305/3.0.0/jsr305-3.0.0.jar \
+    && curl -fsSL -o /opt/spark/jars/delta-core_2.12-2.3.0.jar https://repo1.maven.org/maven2/io/delta/delta-core_2.12/2.3.0/delta-core_2.12-2.3.0.jar \
+    && curl -fsSL -o /opt/spark/jars/delta-storage-2.3.0.jar https://repo1.maven.org/maven2/io/delta/delta-storage/2.3.0/delta-storage-2.3.0.jar \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

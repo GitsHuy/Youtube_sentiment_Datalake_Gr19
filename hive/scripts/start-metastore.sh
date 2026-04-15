@@ -17,6 +17,8 @@ sed -i "s|__METASTORE_WAREHOUSE_DIR__|${METASTORE_WAREHOUSE_DIR}|g" "${HIVE_SITE
 
 export HIVE_AUX_JARS_PATH="${SQLSERVER_JDBC_JAR}"
 export HADOOP_CLASSPATH="${SQLSERVER_JDBC_JAR}:${HADOOP_CLASSPATH:-}"
+export HADOOP_OPTS="${HADOOP_OPTS:-} -Djava.net.preferIPv4Stack=true"
+export HADOOP_CLIENT_OPTS="${HADOOP_CLIENT_OPTS:-} -Djava.net.preferIPv4Stack=true"
 
 echo "Waiting for HDFS..."
 until hdfs dfs -ls / >/dev/null 2>&1; do

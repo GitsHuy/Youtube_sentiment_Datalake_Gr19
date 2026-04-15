@@ -45,6 +45,9 @@ YOUTUBE_MAX_RESULTS=100
 YOUTUBE_PAGE_LIMIT=5
 YOUTUBE_RETRY_DELAY_SECONDS=5
 YOUTUBE_PUBLISH_DELAY_MS=0
+YOUTUBE_CONTINUOUS_MODE=true
+YOUTUBE_POLL_INTERVAL_SECONDS=60
+YOUTUBE_DEDUP_CACHE_SIZE=5000
 ```
 
 Khởi động producer:
@@ -57,8 +60,11 @@ docker compose logs --tail 100 producer
 Lưu ý:
 
 - `YOUTUBE_VIDEO_ID` có thể là `videoId` thuần hoặc URL YouTube
-- Producer hiện tại chạy theo từng lượt lấy dữ liệu, chưa phải polling vô hạn
+- Nếu `YOUTUBE_CONTINUOUS_MODE=true`, producer sẽ polling liên tục theo chu kỳ `YOUTUBE_POLL_INTERVAL_SECONDS`
+- Nếu `YOUTUBE_CONTINUOUS_MODE=false`, producer sẽ chạy một vòng rồi dừng
+- `YOUTUBE_DEDUP_CACHE_SIZE` dùng để giữ danh sách `comment_id` gần nhất đã gửi, giúp giảm gửi trùng khi polling
 - Nếu comment API trả về bị rỗng `text`, producer sẽ bỏ qua record đó và ghi log
+- Log producer sẽ thể hiện rõ từng vòng polling: số record lấy được, số record trùng bị bỏ qua, số record mới đã gửi vào Kafka
 
 ## 4. Kiểm tra HDFS và dữ liệu các lớp
 
@@ -197,3 +203,48 @@ Reset cả volume:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\reset_demo.ps1 -RemoveVolumes
 ```
+
+## 11. Smoke test tong quat
+
+Chay smoke test tong quat:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\smoke_test.ps1
+```
+
+Script nay se:
+
+- kiem tra service nen tang chinh
+- dam bao `spark-thriftserver` mo cong `10000`
+- chay lai `register_tables.sql`
+- kiem tra `SHOW TABLES IN lakehouse`
+- chay `spark/sql/checkpoint11_quality_checks.sql`
+
+Luu y:
+
+- day la buoc kiem tra tuy chon
+- khong chay smoke test thi he thong van dung duoc binh thuong
+- neu he thong dang tat, script se fail som va bao ro service nao chua chay
+
+## 12. Cap nhat checkpoint 12
+
+Sau checkpoint 12:
+
+- Bronze, Silver, Gold da chuyen sang `Delta Lake`
+- ten bang trong `lakehouse` giu nguyen
+- du lieu moi duoc ghi vao:
+  - `/lake_delta/bronze/youtube_comments`
+  - `/lake_delta/silver/youtube_comments`
+  - `/lake_delta/gold/youtube_comment_metrics`
+  - `/lake_delta/gold/youtube_sentiment_breakdown`
+
+Kiem tra file tren HDFS:
+
+```powershell
+docker compose exec namenode hdfs dfs -ls /lake_delta/bronze/youtube_comments
+docker compose exec namenode hdfs dfs -ls /lake_delta/silver/youtube_comments
+docker compose exec namenode hdfs dfs -ls /lake_delta/gold/youtube_comment_metrics
+docker compose exec namenode hdfs dfs -ls /lake_delta/gold/youtube_sentiment_breakdown
+```
+
+Neu migration Delta chay dung, trong moi thu muc se thay them `_delta_log`.

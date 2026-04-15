@@ -29,6 +29,14 @@
     <value>__METASTORE_THRIFT_PORT__</value>
   </property>
   <property>
+    <name>metastore.thrift.bind.host</name>
+    <value>0.0.0.0</value>
+  </property>
+  <property>
+    <name>hive.metastore.thrift.bind.host</name>
+    <value>0.0.0.0</value>
+  </property>
+  <property>
     <name>metastore.warehouse.dir</name>
     <value>__METASTORE_WAREHOUSE_DIR__</value>
   </property>

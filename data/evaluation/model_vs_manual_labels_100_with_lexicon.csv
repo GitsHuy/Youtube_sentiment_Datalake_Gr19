@@ -1,0 +1,101 @@
+idx,comment_id,video_id,text,actual_label,review_bucket,notes,predicted_label,predicted_confidence,is_match
+1,UgzoTD5YBfsX4xvnclx4AaABAg,DXVHmGoCTco,Who is your favorite streamer?,neutral,question,question,neutral,0.625757,yes
+2,UgzoTD5YBfsX4xvnclx4AaABAg.AVBIzz2fTkSAVBJFF8pmkR,DXVHmGoCTco,phenomenal,positive,clear praise,clear praise,positive,0.744547,yes
+3,UgzoTD5YBfsX4xvnclx4AaABAg.AVBIzz2fTkSAVBJFa8T3Rf,DXVHmGoCTco,Hi,positive,greeting,greeting,positive,0.417417,yes
+4,UgzoTD5YBfsX4xvnclx4AaABAg.AVBIzz2fTkSAVBJFqFaGX_,DXVHmGoCTco,W,positive,gen z praise,gen z praise,positive,0.721381,yes
+5,UgzoTD5YBfsX4xvnclx4AaABAg.AVBIzz2fTkSAVBJG64_yo7,DXVHmGoCTco,OMG \U0001f631,positive,excited reaction,excited reaction,positive,0.785699,yes
+6,UgzoTD5YBfsX4xvnclx4AaABAg.AVBIzz2fTkSAVBJGOzBmZA,DXVHmGoCTco,"*HI, BRO*",positive,greeting,greeting,positive,0.564566,yes
+7,UgyGx9uiDQfzWN2reYx4AaABAg,DXVHmGoCTco,I need help \U0001f622\U0001f622\U0001f622\U0001f622\U0001f622 i phone pro max,negative,request with sadness,request with sadness,negative,0.966857,yes
+8,Ugxjn42pD9G3ei6MgN94AaABAg,DXVHmGoCTco,ishowspeed my boi,positive,supportive,supportive,positive,0.969940,yes
+9,Ugyp6J_-oxkq6v87CnR4AaABAg,DXVHmGoCTco,J'aimerais participer \U0001f60a\U0001f60d,positive,supportive,supportive,positive,0.906436,yes
+10,UgzlFSRenqzwMXHgUzJ4AaABAg,DXVHmGoCTco,MrBeast do not invite rakai to the next streamer fight video,negative,criticism,criticism,negative,0.951160,yes
+11,UgybiYUrF9xbcBcQPj94AaABAg,DXVHmGoCTco,xqc,neutral,name only,name only,neutral,0.625971,yes
+12,UgxsrXWVtOXQv0mSWx54AaABAg,DXVHmGoCTco,Justice for Rubius,negative,complaint,complaint,negative,0.966420,yes
+13,Ugzz7zcFG0dSFZGDzzx4AaABAg,DXVHmGoCTco,"why do you blindfold people for the lambo challenge, and then tell them when somebody else took off the hand...",negative,question,question,negative,0.967798,yes
+14,UgxGEP3QqFUJcaPVD5Z4AaABAg,DXVHmGoCTco,Fhigt whit Abraham :1  Win to 1000000.0000 money Abraham \U0001f389 :998361,positive,supportive,supportive,positive,0.448239,yes
+15,Ugx0jSJiReia8I3QZRx4AaABAg,DXVHmGoCTco,Is Bluududrulez in the video \U0001f622,negative,question with sadness,question with sadness,negative,0.962934,yes
+16,Ugxcp_Gpvs9PG7vy5r94AaABAg,DXVHmGoCTco,i wanted speed to compete,negative,disappointment,disappointment,neutral,0.530632,no
+17,UgxzHxjUJ_x2Pwqzk3N4AaABAg,DXVHmGoCTco,Hey mr beast I want to come your video I am from India my state is the telangana,neutral,request,request,neutral,0.536682,yes
+18,UgwHOAy16I0sgDWvkBl4AaABAg,DXVHmGoCTco,33:04 is it sells in \u041f\u044f\u0442\u0435\u0440\u043e\u0447\u043a\u0430?,neutral,unclear foreign language,unclear foreign language,neutral,0.986040,yes
+19,Ugy9x1AysUqf10lSo1F4AaABAg,DXVHmGoCTco,45:10 genuinely slime out this kid immediately \U0001fae9\U0001f940,negative,aggressive tone,aggressive tone,negative,0.981808,yes
+20,Ugwm4SqgaBj9DX1VIVt4AaABAg,DXVHmGoCTco,Tumhe abhi tak mujhe koe bhi gift nhi diya jimmy,negative,complaint,complaint,negative,0.573930,yes
+21,Ugy8soEtdJwNmjG5THZ4AaABAg,DXVHmGoCTco,Hi\u2764\u2764,positive,greeting with heart,greeting with heart,positive,0.710860,yes
+22,UgxjZAdL0pdY37pXc454AaABAg,DXVHmGoCTco,Hi,positive,greeting,greeting,positive,0.417417,yes
+23,UgzNS0ENspkixbj8YPt4AaABAg,DXVHmGoCTco,\u0410 \u043a\u0443\u0434\u0430 \u043f\u0440\u043e\u043f\u0430\u043b \u0421\u041f\u0418\u0414 \u043f\u043e\u0441\u043b\u0435 \u0444\u0443\u0442\u0431\u043e\u043b\u0430,neutral,unclear foreign language,unclear foreign language,negative,0.868626,no
+24,Ugx6p52AgZxYHRHp9QR4AaABAg,DXVHmGoCTco,Te amo Ibai,positive,love statement,love statement,positive,0.926291,yes
+25,Ugx6p30CalQAsaD1nkx4AaABAg,DXVHmGoCTco,\u0423 \u0427\u0435\u043d\u0434\u043b\u0435\u0440\u0430 \u0435\u0441\u0442\u044c \u043c\u0438\u0448\u043a\u0430,positive,unclear foreign language,unclear foreign language,positive,0.669665,yes
+26,UgzZQ_3KiBONTIauiWV4AaABAg,DXVHmGoCTco,This is the only way i left that I can approach to you I am from durand line pashtoon thor tareen tribe  Hey I will Work for You and This Work Will make you one of the famous person on the planet earth and this Work is different and equivalent to the 1000 most talented people on the planet earth One opportunity for you and for me in a lifetime invest in me I will make you the king I swear I will be loyal to you for my entire life,positive,supportive,supportive,positive,0.649966,yes
+27,UgwdAWLcA4rN-kuoI-B4AaABAg,DXVHmGoCTco,LA COMUNIDAD HISPANOHABLANTE ES LA MEJOR,positive,community praise,community praise,positive,0.980255,yes
+28,UgxrTaQmowZ7mdKqrH94AaABAg,DXVHmGoCTco,No way\U0001f62e\U0001f62e\U0001f62e\U0001f62e\U0001f62e impossible,positive,excited reaction,excited reaction,positive,0.606004,yes
+29,UgxxQpKCrBsV7v40BWZ4AaABAg,DXVHmGoCTco,"Hi, Attention! Your channel followers are all over the world, from every country. So most people or even most countries are excluded from your awards and events. So it's hard but not impossible. I'm especially excluded.",negative,complaint,complaint,negative,0.756899,yes
+30,UgwqIIjOZGhiJ5Joxed4AaABAg,DXVHmGoCTco,Justice for abraham \U0001f4aa,negative,complaint,complaint,negative,0.894749,yes
+31,UgwfbmdyL7rCGj8D9qp4AaABAg,DXVHmGoCTco,Niceeeee,positive,clear praise,clear praise,positive,0.892561,yes
+32,UgwkrF9EtIJGlEtdgHp4AaABAg,DXVHmGoCTco,I HOPE YOU CAN GIVE ME GAMING PC \U0001f61f\U0001f61f\U0001f61f\U0001f61f\U0001f61f\U0001f61f\U0001f61f\U0001f61f\U0001f641\U0001f641\U0001f641\U0001f641\U0001f641,negative,request with sadness,request with sadness,negative,0.843624,yes
+33,UgxIALfVtKsDm100k314AaABAg,DXVHmGoCTco,Where's is steak i see him earlier?,neutral,question,question,neutral,0.842553,yes
+34,UgxQDV-lF3tRTNY4J2N4AaABAg,DXVHmGoCTco,Marlon got masayuki level of glaze bro missed and shot himself but still got called your him \U0001f923,negative,possible sarcasm,possible sarcasm,negative,0.825098,yes
+35,UgwftxY2JZm87vgZgex4AaABAg,DXVHmGoCTco,Please,neutral,short request,short request,neutral,0.490501,yes
+36,UgxwcqPK9neNPuD4mkV4AaABAg,DXVHmGoCTco,Today is my birthday but 0 like \U0001f622,negative,sadness,sadness,negative,0.801236,yes
+37,UgwiaYPJ6qZ-mL146R54AaABAg,DXVHmGoCTco,MR beast  can you give me a gaming  PC please please please please please please please please please please please please please please please please please please please please please please\U0001f62d\U0001f62d please please please p\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64f\U0001f64fplease please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please\U0001f97a\U0001f97a\U0001f97a\U0001f97a\U0001f97a\U0001f97a\U0001f97a\U0001f97a\U0001f97a\U0001f97aplease please please please please please please please please please please please  Please please please please please please please please please please please please please please please please please please please please please pleased please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please please pleaseplease,negative,request with sadness,request with sadness,positive,0.629855,no
+38,UgxK5LPLUHhK92egwPl4AaABAg,DXVHmGoCTco,"ppl hating on Rakai, but he did the right thing",positive,supportive,supportive,positive,0.410149,yes
+39,Ugw0tWQOtWyE-OtBorp4AaABAg,DXVHmGoCTco,Ratkai got humbled so bad \U0001f602,positive,mocking,mocking,positive,0.735865,yes
+40,Ugwl7jQmvde7Xm6s2_p4AaABAg,DXVHmGoCTco,Cancel Raikai,negative,criticism,criticism,negative,0.591504,yes
+41,Ugy4NfuXgzzfdfIhsgd4AaABAg,DXVHmGoCTco,Reminds me of my favorite Youtuber Tyler and Snowi 21:32,positive,supportive,supportive,positive,0.793748,yes
+42,UgzmldmoV4nlxqjcUSd4AaABAg,DXVHmGoCTco,Never bring raikai in any video pls,negative,criticism,criticism,negative,0.839386,yes
+43,UgwyM2NwTi-H1KBNMvB4AaABAg,DXVHmGoCTco,Tyler0,neutral,name only,name only,neutral,0.689115,yes
+44,UgzYzp-9IsbJU0ly2ed4AaABAg,DXVHmGoCTco,Mrbeast you have a great youtuber and you're always video  so nice mrbeast I am your big fan\u2764\u2764,positive,clear praise,clear praise,positive,0.902321,yes
+45,Ugy8l4FubHoJTi48jK14AaABAg,DXVHmGoCTco,I am indian boy mrbeast your challenge I am Accept please challenge for me. Please contact me please mrbeast,neutral,request,request,neutral,0.466385,yes
+46,UgzvD5jHqH88b_mF_RV4AaABAg,DXVHmGoCTco,\uc7ac\ubc0c\ub2e4 \u314b\u314b,positive,supportive,supportive,positive,0.747717,yes
+47,UgxwL95pAfoxNtnizqh4AaABAg,DXVHmGoCTco,I hate speed,negative,clear dislike,clear dislike,negative,0.962590,yes
+48,UgzEIMu7C6TVmHhFEod4AaABAg,DXVHmGoCTco,Who noticed payal gaming \u2764,neutral,question with black heart,question with black heart,neutral,0.463158,yes
+49,UgxVFKxfZb3TZ9eP_H14AaABAg,DXVHmGoCTco,"dont have feastables in angola, i want  to buy",neutral,availability issue,availability issue,neutral,0.579529,yes
+50,Ugydvb15ojLT6MsplR94AaABAg,DXVHmGoCTco,Worlds biggest youtuber,positive,clear praise,clear praise,positive,0.918519,yes
+51,Ugy0HeZ5H6-wfsXkg7N4AaABAg,DXVHmGoCTco,You will gave the gift really,neutral,question,question,positive,0.659693,no
+52,Ugz4Xjqzthy42B-b0d94AaABAg,DXVHmGoCTco,\u0623\u0637\u0641\u0627\u0644\u064a \u064a\u062a\u0627\u0628\u0639\u0648\u0646\u0643 \u0628\u0634\u0643\u0644 \u062f\u0627\u0626\u0645 \U0001f44d\u0648\u0647\u0645 \u0645\u0639\u062c\u0628\u0648\u0646 \u0628\u0643 \u0643\u062b\u064a\u0631\u0627\u064b.,positive,supportive,supportive,positive,0.984347,yes
+53,UgyO5XuQaxHFDy0tJzR4AaABAg,DXVHmGoCTco,ROBLOX 100.000 pls G\u0130VE? \U0001f97a,neutral,request,request,negative,0.693494,no
+54,UgyevfPVA_HChlrug4Z4AaABAg,DXVHmGoCTco,Ishowspeed my favorite,positive,supportive,supportive,positive,0.919123,yes
+55,Ugz6kqWNl-bCpeDoIch4AaABAg,DXVHmGoCTco,I am from India and I am single mother and I wanted to do a challenge like living in bunker for 100 days with my children,neutral,request,request,neutral,0.655179,yes
+56,UgzUMbxotOHSQHS8UKF4AaABAg,DXVHmGoCTco,H\u0131 Guys \u2764,positive,greeting with heart,greeting with heart,positive,0.737871,yes
+57,UgxZMcKdWGMZ8BM8pQh4AaABAg,DXVHmGoCTco,Mr beast rassian and rassia chanel,neutral,unclear request,unclear request,negative,0.436483,no
+58,UgzizOk9RtBJ5i6ovU54AaABAg,DXVHmGoCTco,"real quick, why the captions blue? and more importantly, HOW!?",neutral,question,question,negative,0.882996,no
+59,UgxvxP3C8Fjzj7_NFqV4AaABAg,DXVHmGoCTco,4:48 the Lamborghini just vhanged from a huracan to a aventador SVJ,neutral,observation,observation,negative,0.647640,no
+60,Ugx3k-SLdWHXyavbGUl4AaABAg,DXVHmGoCTco,Ishowspeeddd!!! 10:22,positive,excited reaction,excited reaction,positive,0.638353,yes
+61,UgyaNTOl_3ynt6X8T9x4AaABAg,DXVHmGoCTco,Early,neutral,timing comment,timing comment,neutral,0.592254,yes
+62,UgzipbCL1WAPCNBt7p54AaABAg,DXVHmGoCTco,"Mr. Bist, if you or someone from your team reads my comment, it would be interesting and funny if you recorded a simple video somewhere in Russia or in your usual style",positive,suggestion,suggestion,positive,0.543750,yes
+63,Ugz02DKRy2BmVE2TnbB4AaABAg,DXVHmGoCTco,Awesome,positive,clear praise,clear praise,positive,0.628355,yes
+64,Ugxy9MgvnzG_IEzqt314AaABAg,DXVHmGoCTco,5:00 how much is that lambo?,neutral,question,question,neutral,0.967655,yes
+65,Ugw27g8_tVAcIXLu8A54AaABAg,DXVHmGoCTco,Lucu sama bagussss \U0001f389\U0001f389\U0001f389,positive,clear praise,clear praise,positive,0.949764,yes
+66,UgwbdeG3rcJMe7I0F0t4AaABAg,DXVHmGoCTco,\u3089\u304b\u3044\u305c\u3063\u305f\u3044\u306c\u3051\u308d,negative,criticism,criticism,negative,0.552585,yes
+67,Ugx1R3w-Ypec6CcD-UN4AaABAg,DXVHmGoCTco,Spanish community is the best,positive,community praise,community praise,positive,0.920004,yes
+68,UgzjvkMfDp9QgUgSYwh4AaABAg,DXVHmGoCTco,dear mr beast. mi hermano aconseja que chandler debi\xf3 estar sobre una plataforma giratoria y lanzar desde ah\xed.  saludos desde Sang Tiang Goh -chile,neutral,suggestion,suggestion,neutral,0.956945,yes
+69,Ugxfg_O7nCVKo74DS_V4AaABAg,DXVHmGoCTco,Kenal aja kagak\U0001f639,negative,mocking,mocking,neutral,0.676327,no
+70,UgzfL_EY2RU7eVV5z1x4AaABAg,DXVHmGoCTco,HI MRBeast,positive,greeting,greeting,positive,0.493671,yes
+71,Ugw7GuFA4AfefxIrafR4AaABAg,DXVHmGoCTco,RAKAI\u2764\u200d\U0001f525,positive,supportive,supportive,positive,0.767489,yes
+72,Ugx_Y5xasdT11HlIvjV4AaABAg,DXVHmGoCTco,\U0001f60a\U0001f60a\U0001f60a,positive,emoji only,emoji only,positive,0.936169,yes
+73,UgwEny6QvLZe0RmTdYF4AaABAg,DXVHmGoCTco,\U0001f602\U0001f602\U0001f602\U0001f602\U0001f602\U0001f602\U0001f602\U0001f602\U0001f602\U0001f602\U0001f602\U0001f602\U0001f605\U0001f605\U0001f605\U0001f605\U0001f61d\U0001f61d\U0001f61d\U0001f61d\U0001f61d\U0001f61b\U0001f61b\U0001f61b\U0001f61b\U0001f61b\U0001f61b\U0001f61b,positive,emoji only,emoji only,positive,0.924691,yes
+74,Ugx4EXOORhkTtWRZS6F4AaABAg,DXVHmGoCTco,Best won me money,positive,supportive,supportive,positive,0.564734,yes
+75,UgyF9_hYgr9XkZu-g6R4AaABAg,DXVHmGoCTco,Delusional mr beast thinks universe has no other bigger streamers stupid ahh,negative,criticism,criticism,negative,0.970102,yes
+76,UgwTs0rjKFfgND1fj5h4AaABAg,DXVHmGoCTco,Show us the water wells,neutral,request,request,neutral,0.758657,yes
+77,Ugz_XniC-pbMvLn6QZV4AaABAg,DXVHmGoCTco,bro where tf is cory?,negative,question,question,negative,0.932691,yes
+78,Ugx99t7FLVIM6SZJeL94AaABAg,DXVHmGoCTco,ini pap ji bukan si apa ff ya ?\u2728\U0001f47b,neutral,unclear foreign language,unclear foreign language,neutral,0.484131,yes
+79,Ugzlft2T6llGWztt2gN4AaABAg,DXVHmGoCTco,ini pap ji bukan si apa ff ya ?\u2728\U0001f47b,neutral,unclear foreign language,unclear foreign language,neutral,0.484131,yes
+80,UgzCe805SqhBCOON4MN4AaABAg,DXVHmGoCTco,Speed I love u,positive,love statement,love statement,positive,0.805294,yes
+81,Ugzxmoi-5h3IGRnMOfp4AaABAg,DXVHmGoCTco,ini pap ji bukan si apa ff ya ?\u2728\U0001f47b,neutral,unclear foreign language,unclear foreign language,neutral,0.484131,yes
+82,Ugw_kDniaFFqHv5t2iB4AaABAg,DXVHmGoCTco,\u0111\u1ecd mixi \u0111\u00e2u,neutral,question,question,neutral,0.480149,yes
+83,UgwVS46hANkoJLWPTa94AaABAg,DXVHmGoCTco,Mr beast please come me in your big challenge  I'm Pakistani  And please give me I phone 17 pro in my birthday  Please,neutral,request,request,positive,0.457541,no
+84,Ugxj5CZ68PY_-oIhdCh4AaABAg,DXVHmGoCTco,Mrbeast,neutral,name only,name only,neutral,0.460831,yes
+85,UgxikomHzpL6PKFAXTB4AaABAg,DXVHmGoCTco,Rakkai is the ultimate ragebaiter \U0001f62d,negative,criticism,criticism,negative,0.982176,yes
+86,Ugw3XS4rxq_OxJiv4Bp4AaABAg,DXVHmGoCTco,\u4eba\u5bb6\u8eab\u8fb9\u4eba\u90fd\u4f1a\u88ab\u67e5\u770b,neutral,unclear foreign language,unclear foreign language,neutral,0.822212,yes
+87,UgwC-XMZxSacPRlkkbJ4AaABAg,DXVHmGoCTco,Check out iampancake61,neutral,promotion spam,promotion spam,neutral,0.714688,yes
+88,UgwBcy0T83nsWEbroQ94AaABAg,DXVHmGoCTco,Me encanta tus v\xeddeos puedes venir a Venezuela clasi estado Sucre Car\xfapano,positive,supportive,supportive,positive,0.564461,yes
+89,UgzB3ieSW90kNr56lKx4AaABAg,DXVHmGoCTco,21:02 why is mister beast crawling like that \U0001f62d,neutral,question,question,negative,0.983539,no
+90,UgzdK2Fs7_oUjiSsWrF4AaABAg,DXVHmGoCTco,\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5\U0001f4b5 \U0001f64f \U0001f64f \U0001f64f \U0001f64f \U0001f62d\U0001f62d \U0001f62d \U0001f62d \U0001f62d \U0001f62d \U0001f62d,negative,request with sadness,request with sadness,negative,0.815636,yes
+91,Ugz1XphJMt2sUcG17il4AaABAg,DXVHmGoCTco,Genuinely wanted rakai to win,positive,supportive,supportive,positive,0.411201,yes
+92,UgxGPBrOAuBbvUd6NdF4AaABAg,DXVHmGoCTco,Hi,positive,greeting,greeting,positive,0.417417,yes
+93,Ugy0eboeEDR4Gjtjfa94AaABAg,DXVHmGoCTco,Mr best eu sei voc\xea n\xe3o vai ler isso mais eu queria participar de um v\xeddeo seu,neutral,request,request,neutral,0.681034,yes
+94,UgxscTLqcAdUKAsC3kd4AaABAg,DXVHmGoCTco,Dientes,neutral,unclear short text,unclear short text,neutral,0.547052,yes
+95,UgyC8uAr5_MUMtnRVGF4AaABAg,DXVHmGoCTco,Esos dientes,neutral,unclear short text,unclear short text,neutral,0.645651,yes
+96,UgwIE7488Gn98f5-MDR4AaABAg,DXVHmGoCTco,Payal gaming representing India is the worst thing possible for Indian youtubers \U0001f622,negative,criticism,criticism,negative,0.977869,yes
+97,UgzPMZnJThMl9-JSOWZ4AaABAg,DXVHmGoCTco,Payal gaming \u2764,positive,supportive,supportive,positive,0.701627,yes
+98,UgyZ63uiX1fz1zOrXk94AaABAg,DXVHmGoCTco,This is cinema and cool! 28:57,positive,clear praise,clear praise,positive,0.926827,yes
+99,Ugwg5pBIJRHUnDyLxdh4AaABAg,DXVHmGoCTco,15:09  folk\U0001f62d\U0001f494,negative,sad reaction,sad reaction,negative,0.963643,yes
+100,UgxnvxRx6dx1pjkabph4AaABAg,DXVHmGoCTco,rakai is crazyyyand i love himmmm,positive,supportive,supportive,positive,0.870620,yes

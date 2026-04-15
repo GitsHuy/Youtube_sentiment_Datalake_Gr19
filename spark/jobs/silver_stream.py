@@ -1,5 +1,7 @@
+import json
 import logging
 import os
+import re
 from functools import reduce
 from typing import Optional, Union
 
@@ -21,6 +23,7 @@ from pyspark.sql.functions import (
 from pyspark.sql.types import (
     BooleanType,
     IntegerType,
+    LongType,
     StringType,
     StructField,
     StructType,
@@ -67,6 +70,10 @@ NEGATIVE_KEYWORDS = [
     "poor",
 ]
 
+UNICODE_ESCAPE_PATTERN = re.compile(r"(\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8})")
+REPEATED_LATIN_CHAR_PATTERN = re.compile(r"([a-z])\1{2,}")
+ELONGATED_LATIN_WORD_PATTERN = re.compile(r"\b[a-z]*([a-z])\1{2,}[a-z]*\b")
+
 SENTIMENT_MODE = os.getenv("SENTIMENT_MODE", "transformer").strip().lower()
 SENTIMENT_MODEL_NAME = os.getenv(
     "SENTIMENT_MODEL_NAME",
@@ -78,8 +85,13 @@ SENTIMENT_FALLBACK_TO_KEYWORD = os.getenv(
     "SENTIMENT_FALLBACK_TO_KEYWORD",
     "true",
 ).strip().lower() == "true"
+SENTIMENT_SLANG_LEXICON_PATH = os.getenv(
+    "SENTIMENT_SLANG_LEXICON_PATH",
+    "/opt/jobs/slang_sentiment_lexicon.json",
+).strip()
 
 _SENTIMENT_PREDICTOR = None
+_SLANG_LEXICON = None
 
 
 def create_spark() -> SparkSession:
@@ -116,6 +128,37 @@ def build_prediction_schema() -> StructType:
             StructField("sentiment", StringType(), False),
         ]
     )
+
+
+def build_silver_output_schema() -> StructType:
+    return StructType(
+        [
+            StructField("event_time", TimestampType(), True),
+            StructField("collected_at", TimestampType(), True),
+            StructField("comment_id", StringType(), True),
+            StructField("video_id", StringType(), True),
+            StructField("author", StringType(), True),
+            StructField("text", StringType(), True),
+            StructField("like_count", IntegerType(), True),
+            StructField("reply_count", IntegerType(), True),
+            StructField("is_reply", BooleanType(), True),
+            StructField("parent_comment_id", StringType(), True),
+            StructField("lang", StringType(), True),
+            StructField("source", StringType(), True),
+            StructField("ingested_at", TimestampType(), True),
+            StructField("text_clean", StringType(), True),
+            StructField("text_length", IntegerType(), True),
+            StructField("collected_delay_seconds", LongType(), True),
+            StructField("silver_processed_at", TimestampType(), True),
+            StructField("positive_score", IntegerType(), True),
+            StructField("negative_score", IntegerType(), True),
+            StructField("sentiment", StringType(), True),
+        ]
+    )
+
+
+def ensure_delta_table(spark: SparkSession, path: str, schema: StructType) -> None:
+    spark.createDataFrame([], schema).write.format("delta").mode("ignore").save(path)
 
 
 def keyword_score(text_column: Column, keywords: list[str]) -> Column:
@@ -181,6 +224,95 @@ def normalize_label(label: str) -> str:
         return "positive"
 
     raise ValueError(f"Unsupported sentiment label: {label}")
+
+
+def load_slang_lexicon(path: str) -> list[dict]:
+    if not path:
+        return []
+
+    if not os.path.exists(path):
+        logger.info("Slang lexicon file not found at %s. Continuing without lexicon.", path)
+        return []
+
+    raw_entries = json.loads(open(path, "r", encoding="utf-8").read())
+    prepared_entries = []
+    for item in raw_entries:
+        term = str(item["term"]).strip().lower()
+        normalized = str(item["normalized"]).strip().lower()
+        if not term or not normalized:
+            continue
+
+        if re.search(r"[a-z0-9]", term):
+            pattern = re.compile(rf"(?<!\w){re.escape(term)}(?!\w)")
+        else:
+            pattern = re.compile(re.escape(term))
+
+        prepared_entries.append(
+            {
+                "term": term,
+                "normalized": normalized,
+                "pattern": pattern,
+            }
+        )
+
+    prepared_entries.sort(key=lambda item: len(item["term"]), reverse=True)
+    logger.info("Loaded %s slang lexicon entries from %s", len(prepared_entries), path)
+    return prepared_entries
+
+
+def get_slang_lexicon() -> list[dict]:
+    global _SLANG_LEXICON
+
+    if _SLANG_LEXICON is None:
+        _SLANG_LEXICON = load_slang_lexicon(SENTIMENT_SLANG_LEXICON_PATH)
+
+    return _SLANG_LEXICON
+
+
+def apply_slang_lexicon(text: str, lexicon_entries: list[dict]) -> str:
+    if not lexicon_entries:
+        return text
+
+    updated_text = expand_elongated_latin_words(decode_unicode_escapes(text))
+    for item in lexicon_entries:
+        updated_text = item["pattern"].sub(f" {item['normalized']} ", updated_text)
+
+    updated_text = re.sub(r"\s+", " ", updated_text).strip()
+    return updated_text
+
+
+def decode_unicode_escapes(text: str) -> str:
+    if not text or "\\" not in text:
+        return text
+
+    def replace_match(match: re.Match[str]) -> str:
+        token = match.group(0)
+        try:
+            return token.encode("ascii").decode("unicode_escape")
+        except UnicodeDecodeError:
+            return token
+
+    return UNICODE_ESCAPE_PATTERN.sub(replace_match, text)
+
+
+def canonicalize_repeated_latin_chars(text: str) -> str:
+    if not text:
+        return text
+    return REPEATED_LATIN_CHAR_PATTERN.sub(r"\1", text)
+
+
+def expand_elongated_latin_words(text: str) -> str:
+    if not text:
+        return text
+
+    def replace_match(match: re.Match[str]) -> str:
+        original = match.group(0)
+        normalized = canonicalize_repeated_latin_chars(original)
+        if normalized == original:
+            return original
+        return f"{original} {normalized}"
+
+    return ELONGATED_LATIN_WORD_PATTERN.sub(replace_match, text)
 
 
 class KeywordSentimentPredictor:
@@ -337,7 +469,8 @@ def score_batch(batch_df: DataFrame, epoch_id: int, silver_path: str, prediction
         return
 
     predictor = get_sentiment_predictor()
-    texts = [row["text_clean"] for row in batch_rows]
+    slang_lexicon = get_slang_lexicon()
+    texts = [apply_slang_lexicon(row["text_clean"], slang_lexicon) for row in batch_rows]
     predictions = predictor.predict(texts)
 
     prediction_rows = []
@@ -361,19 +494,22 @@ def score_batch(batch_df: DataFrame, epoch_id: int, silver_path: str, prediction
         len(prediction_rows),
         SENTIMENT_MODE,
     )
-    scored_df.write.mode("append").parquet(silver_path)
+    scored_df.write.format("delta").mode("append").save(silver_path)
 
 
 def main() -> None:
     spark = create_spark()
-    schema = build_schema()
+    bronze_schema = build_schema()
     prediction_schema = build_prediction_schema()
+    silver_schema = build_silver_output_schema()
 
-    bronze_path = "hdfs://namenode:8020/lake/bronze/youtube_comments"
-    silver_path = "hdfs://namenode:8020/lake/silver/youtube_comments"
-    checkpoint_path = "hdfs://namenode:8020/checkpoints/silver_youtube_comments"
+    bronze_path = "hdfs://namenode:8020/lake_delta/bronze/youtube_comments"
+    silver_path = "hdfs://namenode:8020/lake_delta/silver/youtube_comments"
+    checkpoint_path = "hdfs://namenode:8020/checkpoints_delta/silver_youtube_comments"
 
-    bronze_stream = spark.readStream.schema(schema).parquet(bronze_path)
+    ensure_delta_table(spark, bronze_path, bronze_schema)
+    ensure_delta_table(spark, silver_path, silver_schema)
+    bronze_stream = spark.readStream.format("delta").load(bronze_path)
     cleaned_stream = build_clean_stream(bronze_stream)
 
     (

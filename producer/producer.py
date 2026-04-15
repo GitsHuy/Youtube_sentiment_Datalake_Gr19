@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from collections import deque
 from datetime import datetime, timezone
 from html import unescape
 from typing import Iterable
@@ -72,6 +73,29 @@ def to_bool(value: object) -> bool:
     return bool(value)
 
 
+class RecentCommentCache:
+    def __init__(self, max_size: int) -> None:
+        if max_size < 1:
+            raise ValueError("YOUTUBE_DEDUP_CACHE_SIZE phai lon hon 0")
+
+        self.max_size = max_size
+        self._seen_ids: set[str] = set()
+        self._ordered_ids: deque[str] = deque()
+
+    def add_if_new(self, comment_id: str) -> bool:
+        if comment_id in self._seen_ids:
+            return False
+
+        self._seen_ids.add(comment_id)
+        self._ordered_ids.append(comment_id)
+
+        if len(self._ordered_ids) > self.max_size:
+            oldest_id = self._ordered_ids.popleft()
+            self._seen_ids.discard(oldest_id)
+
+        return True
+
+
 def normalize_record(payload: dict, default_source: str) -> dict:
     normalized = dict(payload)
     normalized["collected_at"] = normalized.get("collected_at") or normalized.get("event_time")
@@ -116,9 +140,9 @@ def send_records(
     expected_video_id: str | None,
     replay_delay_ms: int,
     skip_invalid_records: bool = False,
-) -> int:
+) -> dict:
     sent_count = 0
-    skipped_count = 0
+    skipped_invalid_count = 0
 
     for raw_payload in records:
         payload = normalize_record(raw_payload, default_source=raw_payload.get("source", "unknown"))
@@ -128,7 +152,7 @@ def send_records(
             if not skip_invalid_records:
                 raise
 
-            skipped_count += 1
+            skipped_invalid_count += 1
             print(
                 f"Skipping invalid record {payload.get('comment_id', 'unknown')}: {exc}",
                 flush=True,
@@ -142,10 +166,34 @@ def send_records(
         if replay_delay_ms > 0:
             time.sleep(replay_delay_ms / 1000.0)
 
-    if skipped_count > 0:
-        print(f"Skipped {skipped_count} invalid record(s) during ingestion.", flush=True)
+    producer.flush()
 
-    return sent_count
+    if skipped_invalid_count > 0:
+        print(f"Skipped {skipped_invalid_count} invalid record(s) during ingestion.", flush=True)
+
+    return {
+        "sent_count": sent_count,
+        "skipped_invalid_count": skipped_invalid_count,
+    }
+
+
+def filter_new_records(records: Iterable[dict], cache: RecentCommentCache) -> tuple[list[dict], int]:
+    fresh_records = []
+    duplicate_count = 0
+
+    for record in records:
+        comment_id = str(record.get("comment_id") or "").strip()
+        if not comment_id:
+            fresh_records.append(record)
+            continue
+
+        if cache.add_if_new(comment_id):
+            fresh_records.append(record)
+            continue
+
+        duplicate_count += 1
+
+    return fresh_records, duplicate_count
 
 
 def stream_file_once(producer: KafkaProducer, topic: str, data_path: str, replay_delay_ms: int) -> int:
@@ -159,7 +207,8 @@ def stream_file_once(producer: KafkaProducer, topic: str, data_path: str, replay
                 continue
             records.append(json.loads(line))
 
-    return send_records(producer, topic, records, expected_video_id, replay_delay_ms)
+    stats = send_records(producer, topic, records, expected_video_id, replay_delay_ms)
+    return stats["sent_count"]
 
 
 def run_sample_mode(producer: KafkaProducer, topic: str, data_path: str, replay_delay_ms: int) -> None:
@@ -316,6 +365,9 @@ def run_youtube_api_mode(producer: KafkaProducer, topic: str) -> None:
     page_limit = int(getenv("YOUTUBE_PAGE_LIMIT", "5"))
     retry_delay_seconds = int(getenv("YOUTUBE_RETRY_DELAY_SECONDS", "5"))
     publish_delay_ms = int(getenv("YOUTUBE_PUBLISH_DELAY_MS", "0"))
+    continuous_mode = str_to_bool(getenv("YOUTUBE_CONTINUOUS_MODE", "false"))
+    poll_interval_seconds = int(getenv("YOUTUBE_POLL_INTERVAL_SECONDS", "60"))
+    dedup_cache_size = int(getenv("YOUTUBE_DEDUP_CACHE_SIZE", "5000"))
 
     if not video_id:
         raise ValueError("Khong the chuan hoa YOUTUBE_VIDEO_ID thanh video id hop le")
@@ -326,32 +378,73 @@ def run_youtube_api_mode(producer: KafkaProducer, topic: str) -> None:
     if page_limit < 1:
         raise ValueError("YOUTUBE_PAGE_LIMIT phai lon hon 0")
 
-    pages = fetch_youtube_comment_pages(
-        api_key=api_key,
-        video_id=video_id,
-        order=order,
-        max_results=max_results,
-        page_limit=page_limit,
-        retry_delay_seconds=retry_delay_seconds,
-    )
-    records = extract_youtube_records(pages, expected_video_id=video_id)
+    if poll_interval_seconds < 1:
+        raise ValueError("YOUTUBE_POLL_INTERVAL_SECONDS phai lon hon 0")
 
-    if not records:
-        print("Khong lay duoc comment nao tu YouTube API.", flush=True)
-        return
+    recent_comment_cache = RecentCommentCache(max_size=dedup_cache_size)
+    poll_iteration = 0
 
-    sent_count = send_records(
-        producer=producer,
-        topic=topic,
-        records=records,
-        expected_video_id=video_id,
-        replay_delay_ms=publish_delay_ms,
-        skip_invalid_records=True,
-    )
-    print(
-        f"YouTube API mode sent {sent_count} records for video_id={video_id}.",
-        flush=True,
-    )
+    while True:
+        poll_iteration += 1
+        pages = list(
+            fetch_youtube_comment_pages(
+                api_key=api_key,
+                video_id=video_id,
+                order=order,
+                max_results=max_results,
+                page_limit=page_limit,
+                retry_delay_seconds=retry_delay_seconds,
+            )
+        )
+        records = extract_youtube_records(pages, expected_video_id=video_id)
+        fresh_records, duplicate_count = filter_new_records(records, recent_comment_cache)
+
+        print(
+            (
+                f"[YouTube poll {poll_iteration}] video_id={video_id} fetched "
+                f"{len(records)} record(s) from {len(pages)} page(s); "
+                f"{duplicate_count} duplicate record(s) skipped before Kafka publish."
+            ),
+            flush=True,
+        )
+
+        if not fresh_records:
+            print(
+                f"[YouTube poll {poll_iteration}] Khong co record moi de gui vao Kafka.",
+                flush=True,
+            )
+        else:
+            stats = send_records(
+                producer=producer,
+                topic=topic,
+                records=fresh_records,
+                expected_video_id=video_id,
+                replay_delay_ms=publish_delay_ms,
+                skip_invalid_records=True,
+            )
+            print(
+                (
+                    f"[YouTube poll {poll_iteration}] Sent {stats['sent_count']} new record(s) "
+                    f"for video_id={video_id}; invalid skipped={stats['skipped_invalid_count']}."
+                ),
+                flush=True,
+            )
+
+        if not continuous_mode:
+            print(
+                "YouTube API mode is configured to run once. Producer will stop after the first polling round.",
+                flush=True,
+            )
+            return
+
+        print(
+            (
+                f"[YouTube poll {poll_iteration}] Sleeping {poll_interval_seconds} second(s) "
+                "before the next polling round."
+            ),
+            flush=True,
+        )
+        time.sleep(poll_interval_seconds)
 
 
 def main() -> None:

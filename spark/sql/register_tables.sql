@@ -1,12 +1,49 @@
 CREATE DATABASE IF NOT EXISTS lakehouse;
 
-CREATE TABLE IF NOT EXISTS lakehouse.bronze_youtube_comments
-USING PARQUET
-LOCATION 'hdfs://namenode:8020/lake/bronze/youtube_comments';
+DROP TABLE IF EXISTS lakehouse.bronze_youtube_comments;
+CREATE TABLE lakehouse.bronze_youtube_comments (
+    event_time TIMESTAMP,
+    collected_at TIMESTAMP,
+    comment_id STRING,
+    video_id STRING,
+    author STRING,
+    text STRING,
+    like_count INT,
+    reply_count INT,
+    is_reply BOOLEAN,
+    parent_comment_id STRING,
+    lang STRING,
+    source STRING,
+    ingested_at TIMESTAMP
+)
+USING DELTA
+LOCATION 'hdfs://namenode:8020/lake_delta/bronze/youtube_comments';
 
-CREATE TABLE IF NOT EXISTS lakehouse.silver_youtube_comments
-USING PARQUET
-LOCATION 'hdfs://namenode:8020/lake/silver/youtube_comments';
+DROP TABLE IF EXISTS lakehouse.silver_youtube_comments;
+CREATE TABLE lakehouse.silver_youtube_comments (
+    event_time TIMESTAMP,
+    collected_at TIMESTAMP,
+    comment_id STRING,
+    video_id STRING,
+    author STRING,
+    text STRING,
+    like_count INT,
+    reply_count INT,
+    is_reply BOOLEAN,
+    parent_comment_id STRING,
+    lang STRING,
+    source STRING,
+    ingested_at TIMESTAMP,
+    text_clean STRING,
+    text_length INT,
+    collected_delay_seconds BIGINT,
+    silver_processed_at TIMESTAMP,
+    positive_score INT,
+    negative_score INT,
+    sentiment STRING
+)
+USING DELTA
+LOCATION 'hdfs://namenode:8020/lake_delta/silver/youtube_comments';
 
 DROP TABLE IF EXISTS lakehouse.gold_youtube_comment_metrics;
 CREATE TABLE lakehouse.gold_youtube_comment_metrics (
@@ -30,8 +67,8 @@ CREATE TABLE lakehouse.gold_youtube_comment_metrics (
     reply_ratio DOUBLE,
     engagement_score BIGINT
 )
-USING PARQUET
-LOCATION 'hdfs://namenode:8020/lake/gold/youtube_comment_metrics';
+USING DELTA
+LOCATION 'hdfs://namenode:8020/lake_delta/gold/youtube_comment_metrics';
 
 DROP TABLE IF EXISTS lakehouse.gold_youtube_sentiment_breakdown;
 CREATE TABLE lakehouse.gold_youtube_sentiment_breakdown (
@@ -45,7 +82,7 @@ CREATE TABLE lakehouse.gold_youtube_sentiment_breakdown (
     reply_comment_count BIGINT,
     avg_text_length DOUBLE
 )
-USING PARQUET
-LOCATION 'hdfs://namenode:8020/lake/gold/youtube_sentiment_breakdown';
+USING DELTA
+LOCATION 'hdfs://namenode:8020/lake_delta/gold/youtube_sentiment_breakdown';
 
 SHOW TABLES IN lakehouse;

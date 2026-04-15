@@ -1,4 +1,4 @@
-FROM apache/hive:4.0.0
+FROM apache/hive:3.1.3
 
 USER root
 

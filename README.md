@@ -59,7 +59,7 @@ Code hiện tại vẫn là baseline để phát triển tiếp:
 
 - ingestion mặc định đọc `data/sample_comments.jsonl`
 - producer mẫu mặc định chỉ gửi 1 lượt để tránh nhân bản số liệu demo
-- Bronze, Silver, Gold đang ghi ra `PARQUET`
+- Bronze, Silver, Gold đang ghi ra `Delta Lake`
 - Silver đang dùng baseline sentiment theo từ khóa
 - Silver đã có khâu khử trùng lặp theo `comment_id`
 - Spark Thrift Server đã có sẵn cho lớp truy vấn SQL
